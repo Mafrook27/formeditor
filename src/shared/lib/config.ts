@@ -4,7 +4,7 @@ const STORENAME = "Storeinfo";
 export class Config {
   static UserInfo: string | null = null;
   static storeinfo: string | null = null;
-  // @ts-expect-error - Reserved for future use
+  // Reserved for future use
   private static SessionID: string | null = null;
   /* ============================
      ✅ getUserInfoToken (Angular → React)

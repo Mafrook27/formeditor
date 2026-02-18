@@ -1,8 +1,23 @@
+import { useNavigate } from 'react-router-dom';
+import { FileText } from 'lucide-react';
+
 // Dashboard Page - Example
 export const DashboardPage = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold">Dashboard</h1>
+        
+        <button
+          onClick={() => navigate('/form-editor')}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
+        >
+          <FileText className="w-5 h-5" />
+          Open Form Editor
+        </button>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {/* Stats Cards */}

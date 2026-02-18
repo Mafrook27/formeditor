@@ -69,6 +69,33 @@ body {
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Editor colors */
+  --color-editor-bg: var(--editor-bg);
+  --color-editor-canvas: var(--editor-canvas);
+  --color-editor-sidebar: var(--editor-sidebar);
+  --color-editor-toolbar: var(--editor-toolbar);
+  --color-editor-border: var(--editor-border);
+  --color-editor-hover: var(--editor-hover);
+  --color-editor-selected: var(--editor-selected);
+  --color-editor-selected-bg: var(--editor-selected-bg);
+  --color-editor-dropzone: var(--editor-dropzone);
+  --color-editor-dropzone-active: var(--editor-dropzone-active);
+  --color-editor-handle: var(--editor-handle);
+  --color-editor-guide: var(--editor-guide);
+
+  /* Animations */
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  @keyframes accordion-down {
+    from { height: 0 }
+    to { height: var(--radix-accordion-content-height) }
+  }
+  @keyframes accordion-up {
+    from { height: var(--radix-accordion-content-height) }
+    to { height: 0 }
+  }
 }
 
 :root {
@@ -98,6 +125,21 @@ body {
   --chart-5: oklch(0.769 0.188 70.08);
   /* Sidebar - White background matching navbar */
   --sidebar-background: 0 0% 100%;
+
+  /* Editor tokens */
+  --editor-bg: hsl(210 33% 97%);
+  --editor-canvas: hsl(0 0% 100%);
+  --editor-sidebar: hsl(210 33% 98%);
+  --editor-toolbar: hsl(0 0% 100%);
+  --editor-border: hsl(214 32% 91%);
+  --editor-hover: hsl(222 47% 96%);
+  --editor-selected: hsl(222 47% 31%);
+  --editor-selected-bg: hsl(222 47% 96%);
+  --editor-dropzone: hsl(172 66% 92%);
+  --editor-dropzone-active: hsl(172 66% 40%);
+  --editor-handle: hsl(215 16% 67%);
+  --editor-guide: hsl(222 47% 60%);
+
   --sidebar-foreground: 0 0% 20%;
   --sidebar-primary: 221 83% 53%;
   --sidebar-primary-foreground: 0 0% 100%;

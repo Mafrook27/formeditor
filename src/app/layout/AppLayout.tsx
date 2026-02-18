@@ -8,6 +8,7 @@ import { SidebarContext } from "@/shared/custom-ui/sidebar/SidebarContext";
 import { Toaster } from "sonner";
 
 const AppLayout = () => {
+  console.log("app working ")
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
