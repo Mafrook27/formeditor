@@ -1,8 +1,23 @@
 {
-  "name": "lmsreact",
-  "private": true,
-  "version": "0.0.0",
+  "name": "react-form-builder",
+  "private": false,
+  "version": "1.0.0",
   "type": "module",
+  "description": "A powerful React-based form builder with drag-and-drop functionality",
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/react-form-builder"
+  },
+  "homepage": "https://github.com/yourusername/react-form-builder#readme",
+  "keywords": [
+    "react",
+    "form-builder",
+    "drag-and-drop",
+    "typescript",
+    "ui-components"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
