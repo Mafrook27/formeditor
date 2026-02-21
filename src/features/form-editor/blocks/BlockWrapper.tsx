@@ -1,11 +1,16 @@
-import React, { memo, useState } from 'react';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { useEditor } from '../EditorContext';
-import type { EditorBlock } from '../editorConfig';
-import { GripVertical, Copy, Trash2, Lock, Unlock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+import React, { memo, useState } from "react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { useEditor } from "../EditorContext";
+import type { EditorBlock } from "../editorConfig";
+import { GripVertical, Copy, Trash2, Lock, Unlock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from "@/components/ui/tooltip";
 
 interface BlockWrapperProps {
   block: EditorBlock;
@@ -14,21 +19,50 @@ interface BlockWrapperProps {
   children: React.ReactNode;
 }
 
-export const BlockWrapper = memo(function BlockWrapper({ block, sectionId, columnIndex, children }: BlockWrapperProps) {
-  const { state, selectBlock, removeBlock, duplicateBlock, updateBlockWithHistory } = useEditor();
+export const BlockWrapper = memo(function BlockWrapper({
+  block,
+  sectionId,
+  columnIndex,
+  children,
+}: BlockWrapperProps) {
+  const {
+    state,
+    selectBlock,
+    removeBlock,
+    duplicateBlock,
+    updateBlockWithHistory,
+  } = useEditor();
   const isSelected = state.selectedBlockId === block.id;
   const isPreview = state.isPreviewMode;
   const [isHovered, setIsHovered] = useState(false);
 
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
     id: block.id,
-    data: { type: 'block', block, sectionId, columnIndex },
+    data: { type: "block", block, sectionId, columnIndex },
     disabled: isPreview || block.locked,
   });
 
+  const visualStyle: React.CSSProperties = {
+    backgroundColor: block.backgroundColor || undefined,
+    fontFamily: block.fontFamily || undefined,
+    border: block.blockBorderWidth
+      ? `${block.blockBorderWidth}px ${block.blockBorderStyle || "solid"} ${block.blockBorderColor || "#e2e8f0"}`
+      : undefined,
+    borderRadius: block.blockBorderRadius
+      ? `${block.blockBorderRadius}px`
+      : undefined,
+  };
+
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
-    transition: isDragging ? 'none' : transition,
+    transition: isDragging ? "none" : transition,
     opacity: isDragging ? 0.3 : 1,
     width: `${block.width}%`,
     minWidth: 0, // Critical: allows flex/grid children to shrink below content size
@@ -40,23 +74,27 @@ export const BlockWrapper = memo(function BlockWrapper({ block, sectionId, colum
     paddingRight: `${block.paddingX || 0}px`,
     paddingTop: `${block.paddingY || 0}px`,
     paddingBottom: `${block.paddingY || 0}px`,
-    cursor: isDragging ? 'grabbing' : 'default',
+    cursor: isDragging ? "grabbing" : "default",
+    ...visualStyle,
   };
 
   if (isPreview) {
     return (
-      <div style={{
-        width: `${block.width}%`,
-        minWidth: 0, // Critical: allows flex/grid children to shrink
-        marginTop: `${block.marginTop || 0}px`,
-        marginBottom: `${block.marginBottom || 0}px`,
-        marginLeft: `${block.marginLeft || 0}px`,
-        marginRight: `${block.marginRight || 0}px`,
-        paddingLeft: `${block.paddingX || 0}px`,
-        paddingRight: `${block.paddingX || 0}px`,
-        paddingTop: `${block.paddingY || 0}px`,
-        paddingBottom: `${block.paddingY || 0}px`,
-      }}>
+      <div
+        style={{
+          width: `${block.width}%`,
+          minWidth: 0, // Critical: allows flex/grid children to shrink
+          marginTop: `${block.marginTop || 0}px`,
+          marginBottom: `${block.marginBottom || 0}px`,
+          marginLeft: `${block.marginLeft || 0}px`,
+          marginRight: `${block.marginRight || 0}px`,
+          paddingLeft: `${block.paddingX || 0}px`,
+          paddingRight: `${block.paddingX || 0}px`,
+          paddingTop: `${block.paddingY || 0}px`,
+          paddingBottom: `${block.paddingY || 0}px`,
+          ...visualStyle,
+        }}
+      >
         {children}
       </div>
     );
@@ -67,33 +105,47 @@ export const BlockWrapper = memo(function BlockWrapper({ block, sectionId, colum
       ref={setNodeRef}
       style={style}
       className={`group relative rounded-sm border-2 ${
-        isSelected 
-          ? 'block-selected border-primary' 
-          : isHovered 
-            ? 'block-hover border-primary/30' 
-            : 'border-dashed border-gray-300/40'
-      } ${isDragging ? 'z-50' : ''}`}
+        isSelected
+          ? "block-selected border-primary"
+          : isHovered
+            ? "block-hover border-primary/30"
+            : "border-dashed border-gray-300/40"
+      } ${isDragging ? "z-50" : ""}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       role="button"
       tabIndex={0}
-      onClick={(e) => { e.stopPropagation(); selectBlock(block.id); }}
-      onKeyDown={(e) => { 
+      onClick={(e) => {
+        e.stopPropagation();
+        selectBlock(block.id);
+      }}
+      onKeyDown={(e) => {
         // Don't prevent space/enter if user is editing inside the block
         const target = e.target as HTMLElement;
-        if (target !== e.currentTarget && (target.isContentEditable || target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+        if (
+          target !== e.currentTarget &&
+          (target.isContentEditable ||
+            target.tagName === "INPUT" ||
+            target.tagName === "TEXTAREA")
+        ) {
           return; // Let the editable element handle the key
         }
-        if (e.key === 'Enter' || e.key === ' ') { 
-          e.preventDefault(); 
-          e.stopPropagation(); 
-          selectBlock(block.id); 
-        } 
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          e.stopPropagation();
+          selectBlock(block.id);
+        }
       }}
     >
       {/* Drag handle */}
       {(isHovered || isSelected) && !block.locked && (
-        <div className="absolute -left-8 top-0 flex flex-col items-center gap-0.5 opacity-0 group-hover:opacity-100" style={{ transitionProperty: 'opacity', transitionDuration: 'var(--transition-fast)' }}>
+        <div
+          className="absolute -left-8 top-0 flex flex-col items-center gap-0.5 opacity-0 group-hover:opacity-100"
+          style={{
+            transitionProperty: "opacity",
+            transitionDuration: "var(--transition-fast)",
+          }}
+        >
           <TooltipProvider delayDuration={300}>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -105,7 +157,9 @@ export const BlockWrapper = memo(function BlockWrapper({ block, sectionId, colum
                   <GripVertical className="h-4 w-4" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="left" className="text-xs">Drag to reorder</TooltipContent>
+              <TooltipContent side="left" className="text-xs">
+                Drag to reorder
+              </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
@@ -117,7 +171,15 @@ export const BlockWrapper = memo(function BlockWrapper({ block, sectionId, colum
           <TooltipProvider delayDuration={200}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); duplicateBlock(block.id); }}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    duplicateBlock(block.id);
+                  }}
+                >
                   <Copy className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger>
@@ -125,15 +187,37 @@ export const BlockWrapper = memo(function BlockWrapper({ block, sectionId, colum
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); updateBlockWithHistory(block.id, { locked: !block.locked }); }}>
-                  {block.locked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    updateBlockWithHistory(block.id, { locked: !block.locked });
+                  }}
+                >
+                  {block.locked ? (
+                    <Lock className="h-3.5 w-3.5" />
+                  ) : (
+                    <Unlock className="h-3.5 w-3.5" />
+                  )}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent className="text-xs">{block.locked ? 'Unlock' : 'Lock'}</TooltipContent>
+              <TooltipContent className="text-xs">
+                {block.locked ? "Unlock" : "Lock"}
+              </TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); removeBlock(block.id); }}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 text-destructive hover:text-destructive"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeBlock(block.id);
+                  }}
+                >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger>

@@ -2,71 +2,75 @@
 // CRITICAL: Does NOT override imported styles - inline styles take precedence
 // Implements Typography Isolation Layer for FinTech documents
 
-import React, { memo, useRef, useState, useEffect } from 'react';
-import { useEditor } from '../EditorContext';
-import type { RawHTMLBlockProps } from '../editorConfig';
+import React, { memo, useRef, useState, useEffect } from "react";
+import { useEditor } from "../EditorContext";
+import type { RawHTMLBlockProps } from "../editorConfig";
 
-export const RawHTMLBlock = memo(function RawHTMLBlock({ block }: { block: RawHTMLBlockProps }) {
+export const RawHTMLBlock = memo(function RawHTMLBlock({
+  block,
+}: {
+  block: RawHTMLBlockProps;
+}) {
   const { state, updateBlockWithHistory } = useEditor();
   const isPreview = state.isPreviewMode;
   const containerRef = useRef<HTMLDivElement>(null);
   const [isEditing, setIsEditing] = useState(false);
-  
+
   // Attach event handlers to interactive elements (SIGN buttons)
   useEffect(() => {
     if (containerRef.current) {
       // Find ALL signature buttons - use valid CSS selectors only
       const signButtons = containerRef.current.querySelectorAll(
-        'button[type="button"], [data-signature-button], .sign-button'
+        'button[type="button"], [data-signature-button], .sign-button',
       );
-      
+
       const handleSignatureClick = (e: Event) => {
         e.preventDefault();
         e.stopPropagation();
-        alert('Signature update in progress...');
+        alert("Signature update in progress...");
         // Future: API call for signature image replacement
       };
-      
-      signButtons.forEach(btn => {
+
+      signButtons.forEach((btn) => {
         const buttonText = btn.textContent?.trim().toUpperCase();
-        if (buttonText === 'SIGN' || btn.hasAttribute('data-signature-button')) {
-          (btn as HTMLElement).style.cursor = 'pointer';
-          btn.addEventListener('click', handleSignatureClick);
+        if (
+          buttonText === "SIGN" ||
+          btn.hasAttribute("data-signature-button")
+        ) {
+          (btn as HTMLElement).style.cursor = "pointer";
+          btn.addEventListener("click", handleSignatureClick);
         }
       });
-      
+
       return () => {
-        signButtons.forEach(btn => {
-          btn.removeEventListener('click', handleSignatureClick);
+        signButtons.forEach((btn) => {
+          btn.removeEventListener("click", handleSignatureClick);
         });
       };
     }
   }, [block.htmlContent]);
-  
+
+  const [editText, setEditText] = useState("");
+
   const handleDoubleClick = () => {
     if (!block.locked && !isPreview) {
+      setEditText(block.htmlContent);
       setIsEditing(true);
     }
   };
-  
-  const handleBlur = (e: React.FocusEvent<HTMLDivElement>) => {
-    if (isEditing) {
-      setIsEditing(false);
-      const newHtml = e.currentTarget.innerHTML;
-      if (newHtml !== block.htmlContent) {
-        updateBlockWithHistory(block.id, { htmlContent: newHtml });
-      }
+
+  const handleTextareaBlur = () => {
+    setIsEditing(false);
+    if (editText !== block.htmlContent) {
+      updateBlockWithHistory(block.id, { htmlContent: editText });
     }
   };
-  
+
   // Extract and inject original styles from the HTML
-  const originalStylesCSS = block.originalStyles || '';
-  
+  const originalStylesCSS = block.originalStyles || "";
+
   return (
-    <div 
-      ref={containerRef}
-      className="external-html-container"
-    >
+    <div className="external-html-container">
       {/* 
         TYPOGRAPHY ISOLATION LAYER
         Rules:
@@ -231,20 +235,41 @@ export const RawHTMLBlock = memo(function RawHTMLBlock({ block }: { block: RawHT
           outline-offset: 2px;
         }
       `}</style>
-      
-      {/* Render original HTML with preserved styles */}
-      <div 
-        className={`external-html-content ${isEditing ? 'external-html-editing' : ''}`}
-        dangerouslySetInnerHTML={{ __html: block.htmlContent }}
-        contentEditable={isEditing && !isPreview}
-        suppressContentEditableWarning
-        onBlur={handleBlur}
-        onDoubleClick={handleDoubleClick}
-        style={{
-          minHeight: '20px',
-          cursor: isPreview ? 'default' : 'text',
-        }}
-      />
+
+      {/* Edit mode: textarea for raw HTML editing (avoids dangerouslySetInnerHTML + contentEditable anti-pattern) */}
+      {isEditing ? (
+        <textarea
+          className="external-html-editing"
+          value={editText}
+          onChange={(e) => setEditText(e.target.value)}
+          onBlur={handleTextareaBlur}
+          autoFocus
+          spellCheck={false}
+          style={{
+            width: "100%",
+            minHeight: "200px",
+            fontFamily: "monospace",
+            fontSize: "12px",
+            padding: "8px",
+            border: "2px solid #3b82f6",
+            borderRadius: "4px",
+            resize: "vertical",
+            outline: "none",
+          }}
+        />
+      ) : (
+        /* View mode: dangerouslySetInnerHTML only — no contentEditable */
+        <div
+          ref={containerRef}
+          className="external-html-content"
+          dangerouslySetInnerHTML={{ __html: block.htmlContent }}
+          onDoubleClick={handleDoubleClick}
+          style={{
+            minHeight: "20px",
+            cursor: isPreview ? "default" : "text",
+          }}
+        />
+      )}
     </div>
   );
 });

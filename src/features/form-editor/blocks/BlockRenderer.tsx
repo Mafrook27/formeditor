@@ -1,22 +1,22 @@
-import React from 'react';
-import { BLOCK_TYPES, type EditorBlock } from '../editorConfig';
-import { HeadingBlock } from './HeadingBlock';
-import { ParagraphBlock } from './ParagraphBlock';
-import { HyperlinkBlock } from './HyperlinkBlock';
-import { DividerBlock } from './DividerBlock';
-import { ImageBlock } from './ImageBlock';
-import { TextInputBlock } from './TextInputBlock';
-import { TextareaBlock } from './TextareaBlock';
-import { DropdownBlock } from './DropdownBlock';
-import { RadioGroupBlock } from './RadioGroupBlock';
-import { CheckboxGroupBlock } from './CheckboxGroupBlock';
-import { SingleCheckboxBlock } from './SingleCheckboxBlock';
-import { DatePickerBlock } from './DatePickerBlock';
-import { SignatureBlock } from './SignatureBlock';
-import { TableBlock } from './TableBlock';
-import { ListBlock } from './ListBlock';
-import { ButtonBlock } from './ButtonBlock';
-import { RawHTMLBlock } from './RawHTMLBlock';
+import React from "react";
+import { BLOCK_TYPES, type EditorBlock } from "../editorConfig";
+import { HeadingBlock } from "./HeadingBlock";
+import { ParagraphBlock } from "./ParagraphBlock";
+import { HyperlinkBlock } from "./HyperlinkBlock";
+import { DividerBlock } from "./DividerBlock";
+import { ImageBlock } from "./ImageBlock";
+import { TextInputBlock } from "./TextInputBlock";
+import { TextareaBlock } from "./TextareaBlock";
+import { DropdownBlock } from "./DropdownBlock";
+import { RadioGroupBlock } from "./RadioGroupBlock";
+import { CheckboxGroupBlock } from "./CheckboxGroupBlock";
+import { SingleCheckboxBlock } from "./SingleCheckboxBlock";
+import { DatePickerBlock } from "./DatePickerBlock";
+import { SignatureBlock } from "./SignatureBlock";
+import { TableBlock } from "./TableBlock";
+import { ListBlock } from "./ListBlock";
+import { ButtonBlock } from "./ButtonBlock";
+import { RawHTMLBlock } from "./RawHTMLBlock";
 
 interface BlockRendererProps {
   block: EditorBlock;
@@ -59,6 +59,10 @@ export function BlockRenderer({ block }: BlockRendererProps) {
     case BLOCK_TYPES.RAW_HTML:
       return <RawHTMLBlock block={block as any} />;
     default:
-      return <div className="p-3 text-sm text-muted-foreground bg-muted rounded-md">Unknown block</div>;
+      return (
+        <div className="p-3 text-sm text-muted-foreground bg-muted rounded-md">
+          Unknown block
+        </div>
+      );
   }
 }

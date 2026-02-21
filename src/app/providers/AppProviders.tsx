@@ -7,9 +7,7 @@ export const AppProviders = ({ children }: { children: ReactNode }) => {
   return (
     <ErrorBoundary>
       <QueryProvider>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
       </QueryProvider>
     </ErrorBoundary>
   );

@@ -1,16 +1,28 @@
-import React, { memo, useState, useRef, useEffect, useCallback } from 'react';
-import { useEditor } from '../EditorContext';
-import { Button } from '@/components/ui/button';
-import { Plus, Minus } from 'lucide-react';
-import { containsPlaceholders } from '../parser/MarkParser';
-import { PlaceholderDropdown, usePlaceholderTrigger, insertPlaceholderIntoText } from '../plugins/PlaceholderPlugin';
-import type { TableBlockProps } from '../editorConfig';
-import editorStyles from '../editor.module.css';
+import React, { memo, useState, useRef, useEffect, useCallback } from "react";
+import { useEditor } from "../EditorContext";
+import { Button } from "@/components/ui/button";
+import { Plus, Minus } from "lucide-react";
+import { containsPlaceholders } from "../parser/MarkParser";
+import {
+  PlaceholderDropdown,
+  usePlaceholderTrigger,
+  insertPlaceholderIntoText,
+} from "../plugins/PlaceholderPlugin";
+import type { TableBlockProps } from "../editorConfig";
+import editorStyles from "../editor.module.css";
 
-const CellContent = memo(function CellContent({ content, isPreview }: { content: string; isPreview: boolean }) {
+const CellContent = memo(function CellContent({
+  content,
+  isPreview,
+}: {
+  content: string;
+  isPreview: boolean;
+}) {
   if (!content) {
     if (isPreview) return null;
-    return <span className="text-muted-foreground/50 text-xs">Click to edit</span>;
+    return (
+      <span className="text-muted-foreground/50 text-xs">Click to edit</span>
+    );
   }
 
   if (containsPlaceholders(content)) {
@@ -26,7 +38,11 @@ const CellContent = memo(function CellContent({ content, isPreview }: { content:
               <span
                 key={key}
                 className="bg-primary/10 text-primary font-medium px-0.5 rounded"
-                style={{ backgroundColor: '#b3d4fc', color: '#000', padding: '0 2px' }}
+                style={{
+                  backgroundColor: "#b3d4fc",
+                  color: "#000",
+                  padding: "0 2px",
+                }}
               >
                 {part}
               </span>
@@ -60,22 +76,34 @@ function getRowHeights(block: TableBlockProps): (number | undefined)[] {
   return Array(rowCount).fill(undefined);
 }
 
-export const TableBlock = memo(function TableBlock({ block }: { block: TableBlockProps }) {
+export const TableBlock = memo(function TableBlock({
+  block,
+}: {
+  block: TableBlockProps;
+}) {
   const { state, updateBlockWithHistory } = useEditor();
   const isPreview = state.isPreviewMode;
-  const [editingCell, setEditingCell] = useState<{ row: number; col: number } | null>(null);
-  const [cellValue, setCellValue] = useState('');
+  const [editingCell, setEditingCell] = useState<{
+    row: number;
+    col: number;
+  } | null>(null);
+  const [cellValue, setCellValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const tableRef = useRef<HTMLTableElement>(null);
   const [resizingCol, setResizingCol] = useState<number | null>(null);
   const [resizingRow, setResizingRow] = useState<number | null>(null);
 
-  const rows = block.rows || [['Header 1', 'Header 2', 'Header 3'], ['Cell 1', 'Cell 2', 'Cell 3']];
+  const rows = block.rows || [
+    ["Header 1", "Header 2", "Header 3"],
+    ["Cell 1", "Cell 2", "Cell 3"],
+  ];
 
   const colWidths = getColumnWidths(block);
   const rowHeights = getRowHeights(block);
   const [localWidths, setLocalWidths] = useState<number[] | null>(null);
-  const [localRowHeights, setLocalRowHeights] = useState<(number | undefined)[] | null>(null);
+  const [localRowHeights, setLocalRowHeights] = useState<
+    (number | undefined)[] | null
+  >(null);
   const activeWidths = localWidths || colWidths;
   const activeRowHeights = localRowHeights || rowHeights;
 
@@ -111,28 +139,41 @@ export const TableBlock = memo(function TableBlock({ block }: { block: TableBloc
     colIds.current.length = colCount;
   }
 
-  const handlePlaceholderInsert = useCallback((placeholder: string, position: number) => {
-    if (editingCell) {
-      const newValue = insertPlaceholderIntoText(cellValue, placeholder, position);
-      setCellValue(newValue);
-    }
-  }, [editingCell, cellValue]);
+  const handlePlaceholderInsert = useCallback(
+    (placeholder: string, position: number) => {
+      if (editingCell) {
+        const newValue = insertPlaceholderIntoText(
+          cellValue,
+          placeholder,
+          position,
+        );
+        setCellValue(newValue);
+      }
+    },
+    [editingCell, cellValue],
+  );
 
   const placeholderTrigger = usePlaceholderTrigger({
     onInsert: handlePlaceholderInsert,
   });
 
-  const autoResizeTextarea = useCallback((textarea: HTMLTextAreaElement | null) => {
-    if (textarea) {
-      textarea.style.height = 'auto';
-      textarea.style.height = textarea.scrollHeight + 'px';
-    }
-  }, []);
+  const autoResizeTextarea = useCallback(
+    (textarea: HTMLTextAreaElement | null) => {
+      if (textarea) {
+        textarea.style.height = "auto";
+        textarea.style.height = textarea.scrollHeight + "px";
+      }
+    },
+    [],
+  );
 
-  const handleCellValueChange = useCallback((value: string, textarea: HTMLTextAreaElement) => {
-    setCellValue(value);
-    autoResizeTextarea(textarea);
-  }, [autoResizeTextarea]);
+  const handleCellValueChange = useCallback(
+    (value: string, textarea: HTMLTextAreaElement) => {
+      setCellValue(value);
+      autoResizeTextarea(textarea);
+    },
+    [autoResizeTextarea],
+  );
 
   useEffect(() => {
     if (editingCell && textareaRef.current) {
@@ -144,14 +185,14 @@ export const TableBlock = memo(function TableBlock({ block }: { block: TableBloc
 
   const updateCell = (rowIdx: number, colIdx: number, value: string) => {
     const newRows = rows.map((row, ri) =>
-      row.map((cell, ci) => (ri === rowIdx && ci === colIdx ? value : cell))
+      row.map((cell, ci) => (ri === rowIdx && ci === colIdx ? value : cell)),
     );
     updateBlockWithHistory(block.id, { rows: newRows });
   };
 
   const handleCellClick = (rowIdx: number, colIdx: number) => {
     if (!isPreview && !block.locked) {
-      const currentValue = rows[rowIdx]?.[colIdx] || '';
+      const currentValue = rows[rowIdx]?.[colIdx] || "";
       setCellValue(currentValue);
       setEditingCell({ row: rowIdx, col: colIdx });
     }
@@ -172,10 +213,10 @@ export const TableBlock = memo(function TableBlock({ block }: { block: TableBloc
       placeholderTrigger.handleKeyDown(e as any, textareaRef.current);
     }
 
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       handleCellBlur();
-    } else if (e.key === 'Tab') {
+    } else if (e.key === "Tab") {
       e.preventDefault();
       updateCell(editingCell.row, editingCell.col, cellValue);
 
@@ -183,18 +224,18 @@ export const TableBlock = memo(function TableBlock({ block }: { block: TableBloc
       const cc = rows[0]?.length || 0;
 
       if (nextCol < cc) {
-        const nextValue = rows[editingCell.row]?.[nextCol] || '';
+        const nextValue = rows[editingCell.row]?.[nextCol] || "";
         setCellValue(nextValue);
         setEditingCell({ row: editingCell.row, col: nextCol });
       } else if (editingCell.row + 1 < rows.length) {
-        const nextValue = rows[editingCell.row + 1]?.[0] || '';
+        const nextValue = rows[editingCell.row + 1]?.[0] || "";
         setCellValue(nextValue);
         setEditingCell({ row: editingCell.row + 1, col: 0 });
       } else {
         setEditingCell(null);
         placeholderTrigger.close();
       }
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       setEditingCell(null);
       placeholderTrigger.close();
     }
@@ -206,175 +247,208 @@ export const TableBlock = memo(function TableBlock({ block }: { block: TableBloc
   const localRowHeightsRef = useRef(localRowHeights);
   localRowHeightsRef.current = localRowHeights;
 
-  const handleColResizeStart = useCallback((colIdx: number, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!tableRef.current) return;
+  const handleColResizeStart = useCallback(
+    (colIdx: number, e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!tableRef.current) return;
 
-    const tableWidth = tableRef.current.getBoundingClientRect().width;
-    colResizeState.current = {
-      colIdx,
-      startX: e.clientX,
-      startWidths: [...colWidths],
-      tableWidth,
-    };
-    setResizingCol(colIdx);
+      const tableWidth = tableRef.current.getBoundingClientRect().width;
+      colResizeState.current = {
+        colIdx,
+        startX: e.clientX,
+        startWidths: [...colWidths],
+        tableWidth,
+      };
+      setResizingCol(colIdx);
 
-    const onMouseMove = (ev: MouseEvent) => {
-      const rs = colResizeState.current;
-      if (!rs) return;
-      const deltaPx = ev.clientX - rs.startX;
-      const deltaPct = (deltaPx / rs.tableWidth) * 100;
+      const onMouseMove = (ev: MouseEvent) => {
+        const rs = colResizeState.current;
+        if (!rs) return;
+        const deltaPx = ev.clientX - rs.startX;
+        const deltaPct = (deltaPx / rs.tableWidth) * 100;
 
-      const newWidths = [...rs.startWidths];
-      const leftW = rs.startWidths[rs.colIdx] + deltaPct;
-      const rightW = rs.startWidths[rs.colIdx + 1] - deltaPct;
+        const newWidths = [...rs.startWidths];
+        // Guard: colIdx+1 must exist (can't resize the last column's right edge)
+        if (rs.colIdx + 1 >= rs.startWidths.length) return;
+        const leftW = rs.startWidths[rs.colIdx] + deltaPct;
+        const rightW = rs.startWidths[rs.colIdx + 1] - deltaPct;
 
-      if (leftW < MIN_COL_WIDTH || rightW < MIN_COL_WIDTH) return;
+        if (leftW < MIN_COL_WIDTH || rightW < MIN_COL_WIDTH) return;
 
-      newWidths[rs.colIdx] = leftW;
-      newWidths[rs.colIdx + 1] = rightW;
-      setLocalWidths(newWidths);
-    };
+        newWidths[rs.colIdx] = leftW;
+        newWidths[rs.colIdx + 1] = rightW;
+        setLocalWidths(newWidths);
+      };
 
-    const onMouseUp = () => {
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
+      const onMouseUp = () => {
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
 
-      const finalWidths = localWidthsRef.current;
-      if (finalWidths) {
-        const rounded = finalWidths.map(w => Math.round(w * 100) / 100);
-        updateBlockWithHistory(block.id, { columnWidths: rounded });
-      }
-      setLocalWidths(null);
-      setResizingCol(null);
-      colResizeState.current = null;
-    };
+        const finalWidths = localWidthsRef.current;
+        if (finalWidths) {
+          const rounded = finalWidths.map((w) => Math.round(w * 100) / 100);
+          updateBlockWithHistory(block.id, { columnWidths: rounded });
+        }
+        setLocalWidths(null);
+        setResizingCol(null);
+        colResizeState.current = null;
+      };
 
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-  }, [colWidths, block.id, updateBlockWithHistory]);
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+      document.addEventListener("mousemove", onMouseMove);
+      document.addEventListener("mouseup", onMouseUp);
+    },
+    [colWidths, block.id, updateBlockWithHistory],
+  );
 
-  const handleRowResizeStart = useCallback((rowIdx: number, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!tableRef.current) return;
+  const handleRowResizeStart = useCallback(
+    (rowIdx: number, e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!tableRef.current) return;
 
-    const trElements = tableRef.current.querySelectorAll('tr');
-    const tr = trElements[rowIdx];
-    if (!tr) return;
+      const trElements = tableRef.current.querySelectorAll("tr");
+      const tr = trElements[rowIdx];
+      if (!tr) return;
 
-    const currentHeight = tr.getBoundingClientRect().height;
-    rowResizeState.current = {
-      rowIdx,
-      startY: e.clientY,
-      startHeight: currentHeight,
-    };
-    setResizingRow(rowIdx);
+      const currentHeight = tr.getBoundingClientRect().height;
+      rowResizeState.current = {
+        rowIdx,
+        startY: e.clientY,
+        startHeight: currentHeight,
+      };
+      setResizingRow(rowIdx);
 
-    const currentHeights = [...(localRowHeightsRef.current || rowHeights)];
+      const currentHeights = [...(localRowHeightsRef.current || rowHeights)];
 
-    const onMouseMove = (ev: MouseEvent) => {
-      const rs = rowResizeState.current;
-      if (!rs) return;
-      const deltaY = ev.clientY - rs.startY;
-      const newHeight = Math.max(MIN_ROW_HEIGHT, rs.startHeight + deltaY);
+      const onMouseMove = (ev: MouseEvent) => {
+        const rs = rowResizeState.current;
+        if (!rs) return;
+        const deltaY = ev.clientY - rs.startY;
+        const newHeight = Math.max(MIN_ROW_HEIGHT, rs.startHeight + deltaY);
 
-      const newHeights = [...currentHeights];
-      newHeights[rs.rowIdx] = Math.round(newHeight);
-      setLocalRowHeights(newHeights);
-    };
+        const newHeights = [...currentHeights];
+        newHeights[rs.rowIdx] = Math.round(newHeight);
+        setLocalRowHeights(newHeights);
+      };
 
-    const onMouseUp = () => {
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
+      const onMouseUp = () => {
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
 
-      const finalHeights = localRowHeightsRef.current;
-      if (finalHeights) {
-        updateBlockWithHistory(block.id, { rowHeights: finalHeights.map(h => h || 0) });
-      }
-      setLocalRowHeights(null);
-      setResizingRow(null);
-      rowResizeState.current = null;
-    };
+        const finalHeights = localRowHeightsRef.current;
+        if (finalHeights) {
+          updateBlockWithHistory(block.id, {
+            rowHeights: finalHeights.map((h) => h || 0),
+          });
+        }
+        setLocalRowHeights(null);
+        setResizingRow(null);
+        rowResizeState.current = null;
+      };
 
-    document.body.style.cursor = 'row-resize';
-    document.body.style.userSelect = 'none';
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-  }, [rowHeights, block.id, updateBlockWithHistory]);
+      document.body.style.cursor = "row-resize";
+      document.body.style.userSelect = "none";
+      document.addEventListener("mousemove", onMouseMove);
+      document.addEventListener("mouseup", onMouseUp);
+    },
+    [rowHeights, block.id, updateBlockWithHistory],
+  );
 
   const addRow = () => {
     const cc = rows[0]?.length || 3;
-    const newRow = Array(cc).fill('');
+    const newRow = Array(cc).fill("");
     const newHeights = block.rowHeights ? [...block.rowHeights, 0] : undefined;
-    updateBlockWithHistory(block.id, { rows: [...rows, newRow], ...(newHeights ? { rowHeights: newHeights } : {}) });
+    updateBlockWithHistory(block.id, {
+      rows: [...rows, newRow],
+      ...(newHeights ? { rowHeights: newHeights } : {}),
+    });
   };
 
   const removeRow = (idx: number) => {
     if (rows.length <= 1) return;
     rowIds.current.splice(idx, 1);
     const newRows = rows.filter((_, i) => i !== idx);
-    const newHeights = block.rowHeights ? block.rowHeights.filter((_, i) => i !== idx) : undefined;
-    updateBlockWithHistory(block.id, { rows: newRows, ...(newHeights ? { rowHeights: newHeights } : {}) });
+    const newHeights = block.rowHeights
+      ? block.rowHeights.filter((_, i) => i !== idx)
+      : undefined;
+    updateBlockWithHistory(block.id, {
+      rows: newRows,
+      ...(newHeights ? { rowHeights: newHeights } : {}),
+    });
   };
 
   const addColumn = () => {
-    const newRows = rows.map((row, idx) =>
-      [...row, idx === 0 && block.headerRow ? 'Header' : '']
-    );
+    const newRows = rows.map((row, idx) => [
+      ...row,
+      idx === 0 && block.headerRow ? "Header" : "",
+    ]);
     const equalWidth = 100 / (colWidths.length + 1);
     const normalized = Array(colWidths.length + 1).fill(equalWidth);
-    updateBlockWithHistory(block.id, { rows: newRows, columnWidths: normalized });
+    updateBlockWithHistory(block.id, {
+      rows: newRows,
+      columnWidths: normalized,
+    });
   };
 
   const removeColumn = (colIdx: number) => {
     if ((rows[0]?.length || 0) <= 1) return;
     colIds.current.splice(colIdx, 1);
-    const newRows = rows.map(row => row.filter((_, ci) => ci !== colIdx));
+    const newRows = rows.map((row) => row.filter((_, ci) => ci !== colIdx));
     const newWidths = colWidths.filter((_, ci) => ci !== colIdx);
     const total = newWidths.reduce((s, w) => s + w, 0);
-    const normalized = newWidths.map(w => (w / total) * 100);
-    updateBlockWithHistory(block.id, { rows: newRows, columnWidths: normalized });
+    const normalized = newWidths.map((w) => (w / total) * 100);
+    updateBlockWithHistory(block.id, {
+      rows: newRows,
+      columnWidths: normalized,
+    });
   };
 
   const isEditable = !isPreview && !block.locked;
 
-  const renderResizeHandle = (type: 'col' | 'row', idx: number) => {
-    if (type === 'col') {
+  const renderResizeHandle = (type: "col" | "row", idx: number) => {
+    if (type === "col") {
       const isActive = resizingCol === idx;
       return (
         <div
           onMouseDown={(e) => handleColResizeStart(idx, e)}
           style={{
-            position: 'absolute',
+            position: "absolute",
             top: 0,
             right: -3,
             width: 7,
-            height: '100%',
-            cursor: 'col-resize',
+            height: "100%",
+            cursor: "col-resize",
             zIndex: 10,
           }}
         >
           <div
             style={{
-              position: 'absolute',
+              position: "absolute",
               top: 0,
               left: 2,
               width: isActive ? 3 : 2,
-              height: '100%',
-              backgroundColor: isActive ? '#3b82f6' : 'transparent',
+              height: "100%",
+              backgroundColor: isActive ? "#3b82f6" : "transparent",
               borderRadius: 1,
-              transition: isActive ? 'none' : 'background-color 0.15s',
+              transition: isActive ? "none" : "background-color 0.15s",
             }}
-            onMouseEnter={(e) => { if (resizingCol === null) (e.currentTarget as HTMLElement).style.backgroundColor = '#3b82f6'; }}
-            onMouseLeave={(e) => { if (resizingCol === null) (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
+            onMouseEnter={(e) => {
+              if (resizingCol === null)
+                (e.currentTarget as HTMLElement).style.backgroundColor =
+                  "#3b82f6";
+            }}
+            onMouseLeave={(e) => {
+              if (resizingCol === null)
+                (e.currentTarget as HTMLElement).style.backgroundColor =
+                  "transparent";
+            }}
           />
         </div>
       );
@@ -384,28 +458,36 @@ export const TableBlock = memo(function TableBlock({ block }: { block: TableBloc
       <div
         onMouseDown={(e) => handleRowResizeStart(idx, e)}
         style={{
-          position: 'absolute',
+          position: "absolute",
           left: 0,
           bottom: -3,
-          width: '100%',
+          width: "100%",
           height: 7,
-          cursor: 'row-resize',
+          cursor: "row-resize",
           zIndex: 10,
         }}
       >
         <div
           style={{
-            position: 'absolute',
+            position: "absolute",
             left: 0,
             top: 2,
             height: isActive ? 3 : 2,
-            width: '100%',
-            backgroundColor: isActive ? '#3b82f6' : 'transparent',
+            width: "100%",
+            backgroundColor: isActive ? "#3b82f6" : "transparent",
             borderRadius: 1,
-            transition: isActive ? 'none' : 'background-color 0.15s',
+            transition: isActive ? "none" : "background-color 0.15s",
           }}
-          onMouseEnter={(e) => { if (resizingRow === null) (e.currentTarget as HTMLElement).style.backgroundColor = '#3b82f6'; }}
-          onMouseLeave={(e) => { if (resizingRow === null) (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
+          onMouseEnter={(e) => {
+            if (resizingRow === null)
+              (e.currentTarget as HTMLElement).style.backgroundColor =
+                "#3b82f6";
+          }}
+          onMouseLeave={(e) => {
+            if (resizingRow === null)
+              (e.currentTarget as HTMLElement).style.backgroundColor =
+                "transparent";
+          }}
         />
       </div>
     );
@@ -413,15 +495,15 @@ export const TableBlock = memo(function TableBlock({ block }: { block: TableBloc
 
   return (
     <div className="space-y-2" style={{ minWidth: 0 }}>
-      <div style={{ minWidth: 0, width: '100%', display: 'flex' }}>
-        <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+      <div style={{ minWidth: 0, width: "100%", display: "flex" }}>
+        <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
           <table
             ref={tableRef}
             className="w-full border-collapse text-sm"
             data-testid="table-block"
             style={{
-              tableLayout: 'fixed',
-              width: '100%',
+              tableLayout: "fixed",
+              width: "100%",
               minWidth: 0,
             }}
           >
@@ -432,7 +514,7 @@ export const TableBlock = memo(function TableBlock({ block }: { block: TableBloc
             </colgroup>
             {rows.map((row, rowIdx) => {
               const isHeader = block.headerRow && rowIdx === 0;
-              const Wrapper = isHeader ? 'thead' : 'tbody';
+              const Wrapper = isHeader ? "thead" : "tbody";
               const rh = activeRowHeights[rowIdx];
               const isFirstRow = rowIdx === 0;
               const canResizeRow = isEditable && rowIdx < rows.length - 1;
@@ -440,48 +522,62 @@ export const TableBlock = memo(function TableBlock({ block }: { block: TableBloc
               return (
                 <Wrapper key={rowIds.current[rowIdx]}>
                   <tr
-                    className={isHeader ? 'bg-muted/50' : rowIdx % 2 === 1 ? 'bg-muted/20' : ''}
+                    className={
+                      isHeader
+                        ? "bg-muted/50"
+                        : rowIdx % 2 === 1
+                          ? "bg-muted/20"
+                          : ""
+                    }
                     style={{ height: rh && rh > 0 ? `${rh}px` : undefined }}
                   >
                     {row.map((cell, ci) => {
-                      const isCellEditing = editingCell?.row === rowIdx && editingCell?.col === ci;
-                      const canResizeCol = isEditable && isFirstRow && ci < row.length - 1;
+                      const isCellEditing =
+                        editingCell?.row === rowIdx && editingCell?.col === ci;
+                      const canResizeCol =
+                        isEditable && isFirstRow && ci < row.length - 1;
                       const showRowHandle = canResizeRow && ci === 0;
-                      const needsRelative = isEditable && (canResizeCol || showRowHandle);
-                      const Tag = isHeader ? 'th' : 'td';
+                      const needsRelative =
+                        isEditable && (canResizeCol || showRowHandle);
+                      const Tag = isHeader ? "th" : "td";
                       return (
                         <Tag
                           key={colIds.current[ci]}
-                          className={`border border-border p-2 ${isHeader ? 'font-semibold text-left' : ''} ${isCellEditing ? 'p-0' : ''} ${editorStyles.canvasCell}`}
+                          className={`border border-border p-2 ${isHeader ? "font-semibold text-left" : ""} ${isCellEditing ? "p-0" : ""} ${editorStyles.canvasCell}`}
                           onClick={() => handleCellClick(rowIdx, ci)}
                           style={{
                             minWidth: 0,
-                            position: needsRelative ? 'relative' : undefined,
-                            verticalAlign: 'top',
+                            position: needsRelative ? "relative" : undefined,
+                            verticalAlign: "top",
                           }}
                         >
                           {isCellEditing ? (
                             <textarea
                               ref={textareaRef}
                               value={cellValue}
-                              onChange={(e) => handleCellValueChange(e.target.value, e.target)}
+                              onChange={(e) =>
+                                handleCellValueChange(e.target.value, e.target)
+                              }
                               onBlur={handleCellBlur}
                               onKeyDown={handleKeyDown}
-                              className={`w-full p-2 bg-background border-0 outline-none ring-2 ring-primary resize-none${isHeader ? ' font-semibold' : ''}`}
+                              className={`w-full p-2 bg-background border-0 outline-none ring-2 ring-primary resize-none${isHeader ? " font-semibold" : ""}`}
                               style={{
-                                minHeight: '2.5rem',
-                                overflow: 'hidden',
+                                minHeight: "2.5rem",
+                                overflow: "hidden",
                               }}
                             />
                           ) : (
                             <span
-                              className={`${isEditable ? 'cursor-text hover:bg-primary/5 block px-1 -mx-1 rounded' : ''} ${editorStyles.canvasCell}`}
+                              className={`${isEditable ? "cursor-text hover:bg-primary/5 block px-1 -mx-1 rounded" : ""} ${editorStyles.canvasCell}`}
                             >
-                              <CellContent content={cell} isPreview={isPreview} />
+                              <CellContent
+                                content={cell}
+                                isPreview={isPreview}
+                              />
                             </span>
                           )}
-                          {canResizeCol && renderResizeHandle('col', ci)}
-                          {showRowHandle && renderResizeHandle('row', rowIdx)}
+                          {canResizeCol && renderResizeHandle("col", ci)}
+                          {showRowHandle && renderResizeHandle("row", rowIdx)}
                         </Tag>
                       );
                     })}
@@ -500,7 +596,7 @@ export const TableBlock = memo(function TableBlock({ block }: { block: TableBloc
               return (
                 <div
                   key={rowIds.current[rowIdx]}
-                  className={`flex items-start justify-center border-b border-border ${isHeader ? 'bg-muted/50' : ''}`}
+                  className={`flex items-start justify-center border-b border-border ${isHeader ? "bg-muted/50" : ""}`}
                   style={{ minHeight: rh && rh > 0 ? rh : 36 }}
                 >
                   <Button
@@ -543,7 +639,7 @@ export const TableBlock = memo(function TableBlock({ block }: { block: TableBloc
             variant="outline"
             size="sm"
             className="h-7 text-xs gap-1"
-            onClick={() => removeColumn(rows[0].length - 1)}
+            onClick={() => removeColumn((rows[0]?.length || 1) - 1)}
             disabled={(rows[0]?.length || 0) <= 1}
             data-testid="remove-column-btn"
           >

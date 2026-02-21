@@ -143,25 +143,25 @@ export const mockRichTextHTML = `
 
 // Available placeholders for the @ mention system
 export const availablePlaceholders = [
-  { value: '@CustomerName', label: 'Customer Name', category: 'Customer' },
-  { value: '@CustomerEmail', label: 'Customer Email', category: 'Customer' },
-  { value: '@CustomerPhone', label: 'Customer Phone', category: 'Customer' },
-  { value: '@AccountNumber', label: 'Account Number', category: 'Account' },
-  { value: '@AccountType', label: 'Account Type', category: 'Account' },
-  { value: '@CurrentDate', label: 'Current Date', category: 'System' },
-  { value: '@ExpiryDate', label: 'Expiry Date', category: 'System' },
-  { value: '@CompanyName', label: 'Company Name', category: 'Company' },
-  { value: '@CompanyAddress', label: 'Company Address', category: 'Company' },
-  { value: '@AgentName', label: 'Agent Name', category: 'Agent' },
-  { value: '@AgentEmail', label: 'Agent Email', category: 'Agent' },
+  { value: "@CustomerName", label: "Customer Name", category: "Customer" },
+  { value: "@CustomerEmail", label: "Customer Email", category: "Customer" },
+  { value: "@CustomerPhone", label: "Customer Phone", category: "Customer" },
+  { value: "@AccountNumber", label: "Account Number", category: "Account" },
+  { value: "@AccountType", label: "Account Type", category: "Account" },
+  { value: "@CurrentDate", label: "Current Date", category: "System" },
+  { value: "@ExpiryDate", label: "Expiry Date", category: "System" },
+  { value: "@CompanyName", label: "Company Name", category: "Company" },
+  { value: "@CompanyAddress", label: "Company Address", category: "Company" },
+  { value: "@AgentName", label: "Agent Name", category: "Agent" },
+  { value: "@AgentEmail", label: "Agent Email", category: "Agent" },
   // PH@ style placeholders (FinTech format)
-  { value: 'PH@FirstName', label: 'First Name', category: 'Customer' },
-  { value: 'PH@LastName', label: 'Last Name', category: 'Customer' },
-  { value: 'PH@LoanAmount', label: 'Loan Amount', category: 'Loan' },
-  { value: 'PH@APR', label: 'APR %', category: 'Loan' },
-  { value: 'PH@InterestRate', label: 'Interest Rate', category: 'Loan' },
-  { value: 'PH@DateNow', label: 'Date Now', category: 'System' },
-  { value: 'PH@PortfolioName', label: 'Portfolio Name', category: 'Company' },
+  { value: "PH@FirstName", label: "First Name", category: "Customer" },
+  { value: "PH@LastName", label: "Last Name", category: "Customer" },
+  { value: "PH@LoanAmount", label: "Loan Amount", category: "Loan" },
+  { value: "PH@APR", label: "APR %", category: "Loan" },
+  { value: "PH@InterestRate", label: "Interest Rate", category: "Loan" },
+  { value: "PH@DateNow", label: "Date Now", category: "System" },
+  { value: "PH@PortfolioName", label: "Portfolio Name", category: "Company" },
 ];
 
 // External FinTech Loan Agreement HTML (simulates real external HTML)

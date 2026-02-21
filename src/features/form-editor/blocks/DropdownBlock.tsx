@@ -1,9 +1,19 @@
-import React, { memo } from 'react';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { DropdownBlockProps } from '../editorConfig';
+import React, { memo } from "react";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { DropdownBlockProps } from "../editorConfig";
 
-export const DropdownBlock = memo(function DropdownBlock({ block }: { block: DropdownBlockProps }) {
+export const DropdownBlock = memo(function DropdownBlock({
+  block,
+}: {
+  block: DropdownBlockProps;
+}) {
   return (
     <div className="space-y-1.5">
       <Label className="text-sm font-medium text-foreground">
@@ -16,11 +26,15 @@ export const DropdownBlock = memo(function DropdownBlock({ block }: { block: Dro
         </SelectTrigger>
         <SelectContent>
           {(block.options || []).map((opt, i) => (
-            <SelectItem key={i} value={opt}>{opt}</SelectItem>
+            <SelectItem key={i} value={opt}>
+              {opt}
+            </SelectItem>
           ))}
         </SelectContent>
       </Select>
-      {block.helpText && <p className="text-xs text-muted-foreground">{block.helpText}</p>}
+      {block.helpText && (
+        <p className="text-xs text-muted-foreground">{block.helpText}</p>
+      )}
     </div>
   );
 });

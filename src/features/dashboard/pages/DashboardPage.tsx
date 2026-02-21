@@ -1,5 +1,5 @@
-import { useNavigate } from 'react-router-dom';
-import { FileText } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
+import { FileText } from "lucide-react";
 
 // Dashboard Page - Example
 export const DashboardPage = () => {
@@ -9,9 +9,9 @@ export const DashboardPage = () => {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Dashboard</h1>
-        
+
         <button
-          onClick={() => navigate('/form-editor')}
+          onClick={() => navigate("/form-editor")}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
         >
           <FileText className="w-5 h-5" />

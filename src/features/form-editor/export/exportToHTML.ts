@@ -1,190 +1,247 @@
-import { BLOCK_TYPES, type EditorBlock, type EditorSection, type TableBlockProps, type ListBlockProps, type ButtonBlockProps, type SignatureBlockProps, type RawHTMLBlockProps, type HeadingBlockProps, type ParagraphBlockProps } from '../editorConfig';
-import { EDITOR_VERSION, EDITOR_VERSION_ATTR, EDITOR_SECTION_ATTR, EDITOR_COLUMN_ATTR, EDITOR_BLOCK_TYPE_ATTR, EDITOR_LAYOUT_ATTR } from '../parser/HTMLParser';
+import {
+  BLOCK_TYPES,
+  type EditorBlock,
+  type EditorSection,
+  type TableBlockProps,
+  type ListBlockProps,
+  type ButtonBlockProps,
+  type SignatureBlockProps,
+  type RawHTMLBlockProps,
+  type HeadingBlockProps,
+  type ParagraphBlockProps,
+} from "../editorConfig";
+import {
+  EDITOR_VERSION,
+  EDITOR_VERSION_ATTR,
+  EDITOR_SECTION_ATTR,
+  EDITOR_COLUMN_ATTR,
+  EDITOR_BLOCK_TYPE_ATTR,
+  EDITOR_LAYOUT_ATTR,
+} from "../parser/HTMLParser";
 
 function escapeHtml(str: string): string {
-  if (!str) return '';
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  if (!str) return "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function preservePlaceholders(str: string): string {
-  if (!str) return '';
+  if (!str) return "";
   const parts = str.split(/((?:PH)?@\w+)/g);
-  return parts.map(part => {
-    if (part.match(/^(?:PH)?@\w+$/)) {
-      return `<span class="placeholder" style="background-color: #b3d4fc; padding: 0 2px;">${escapeHtml(part)}</span>`;
-    }
-    return escapeHtml(part);
-  }).join('');
+  return parts
+    .map((part) => {
+      if (part.match(/^(?:PH)?@\w+$/)) {
+        return `<span class="placeholder" style="background-color: #b3d4fc; padding: 0 2px;">${escapeHtml(part)}</span>`;
+      }
+      return escapeHtml(part);
+    })
+    .join("");
 }
 
 function renderBlockHTML(block: EditorBlock): string {
   const margin = `margin-top: ${block.marginTop || 0}px; margin-bottom: ${block.marginBottom || 0}px; margin-left: ${block.marginLeft || 0}px; margin-right: ${block.marginRight || 0}px;`;
   const padding = `padding-left: ${block.paddingX || 0}px; padding-right: ${block.paddingX || 0}px; padding-top: ${block.paddingY || 0}px; padding-bottom: ${block.paddingY || 0}px;`;
-  
-  const commonAttrs = `data-block-id="${block.id}" data-block-type="${block.type}" data-width="${block.width}" data-locked="${block.locked}" data-margin-top="${block.marginTop || 0}" data-margin-bottom="${block.marginBottom || 0}"`;
+  const b = block as any;
+  const visualBg = b.backgroundColor
+    ? `background-color: ${b.backgroundColor};`
+    : "";
+  const visualFont = b.fontFamily ? `font-family: ${b.fontFamily};` : "";
+  const visualBorder = b.blockBorderWidth
+    ? `border: ${b.blockBorderWidth}px ${b.blockBorderStyle || "solid"} ${b.blockBorderColor || "#e2e8f0"};`
+    : "";
+  const visualRadius = b.blockBorderRadius
+    ? `border-radius: ${b.blockBorderRadius}px;`
+    : "";
+  const visualStyles = [visualBg, visualFont, visualBorder, visualRadius]
+    .filter(Boolean)
+    .join(" ");
+
+  const commonAttrs = `data-builder="1" data-block-id="${block.id}" data-block-type="${block.type}" data-width="${block.width}" data-locked="${block.locked}" data-margin-top="${block.marginTop || 0}" data-margin-bottom="${block.marginBottom || 0}"`;
 
   switch (block.type) {
     case BLOCK_TYPES.RAW_HTML: {
       const rawBlock = block as RawHTMLBlockProps;
       return `<div ${commonAttrs} data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${margin}">${rawBlock.htmlContent}</div>`;
     }
-    
+
     case BLOCK_TYPES.HEADING: {
-      const tag = block.level || 'h2';
-      const color = block.color ? `color: ${block.color};` : '';
+      const tag = block.level || "h2";
+      const color = block.color ? `color: ${block.color};` : "";
       // Prefer htmlContent (preserves inline bold/italic/spans); fall back to escaped plain text
-      const content = (block as any).htmlContent || preservePlaceholders(block.content);
-      return `<${tag} ${commonAttrs} data-level="${tag}" data-font-size="${block.fontSize}" data-font-weight="${block.fontWeight}" data-align="${block.textAlign}" data-line-height="${block.lineHeight}" data-color="${block.color || ''}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" data-padding-x="${block.paddingX || 0}" data-padding-y="${block.paddingY || 0}" style="font-size: ${block.fontSize}px; font-weight: ${block.fontWeight}; text-align: ${block.textAlign}; line-height: ${block.lineHeight}; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces; ${color} ${margin} ${padding}">${content}</${tag}>`;
+      const content =
+        (block as any).htmlContent || preservePlaceholders(block.content);
+      return `<${tag} ${commonAttrs} data-level="${tag}" data-font-size="${block.fontSize}" data-font-weight="${block.fontWeight}" data-align="${block.textAlign}" data-line-height="${block.lineHeight}" data-color="${block.color || ""}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" data-padding-x="${block.paddingX || 0}" data-padding-y="${block.paddingY || 0}" style="font-size: ${block.fontSize}px; font-weight: ${block.fontWeight}; text-align: ${block.textAlign}; line-height: ${block.lineHeight}; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces; ${color} ${margin} ${padding} ${visualStyles}">${content}</${tag}>`;
     }
 
     case BLOCK_TYPES.PARAGRAPH: {
-      const color = block.color ? `color: ${block.color};` : '';
+      const color = block.color ? `color: ${block.color};` : "";
       // Prefer htmlContent (preserves inline bold/italic/spans); fall back to escaped plain text
-      const content = (block as any).htmlContent || preservePlaceholders(block.content);
-      return `<p ${commonAttrs} data-font-size="${block.fontSize}" data-font-weight="${block.fontWeight}" data-align="${block.textAlign}" data-line-height="${block.lineHeight}" data-color="${block.color || ''}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" data-padding-x="${block.paddingX || 0}" data-padding-y="${block.paddingY || 0}" style="font-size: ${block.fontSize}px; font-weight: ${block.fontWeight}; text-align: ${block.textAlign}; line-height: ${block.lineHeight}; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces; ${color} ${margin} ${padding}">${content}</p>`;
+      const content =
+        (block as any).htmlContent || preservePlaceholders(block.content);
+      return `<p ${commonAttrs} data-font-size="${block.fontSize}" data-font-weight="${block.fontWeight}" data-align="${block.textAlign}" data-line-height="${block.lineHeight}" data-color="${block.color || ""}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" data-padding-x="${block.paddingX || 0}" data-padding-y="${block.paddingY || 0}" style="font-size: ${block.fontSize}px; font-weight: ${block.fontWeight}; text-align: ${block.textAlign}; line-height: ${block.lineHeight}; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces; ${color} ${margin} ${padding} ${visualStyles}">${content}</p>`;
     }
-    
+
     case BLOCK_TYPES.HYPERLINK: {
-      const color = block.color ? `color: ${block.color};` : 'color: #0066cc;';
-      const textDecoration = block.underline ? 'text-decoration: underline;' : 'text-decoration: none;';
-      const target = block.openInNewTab ? ' target="_blank" rel="noopener noreferrer"' : '';
-      return `<div ${commonAttrs} data-text="${escapeHtml(block.text)}" data-url="${escapeHtml(block.url)}" data-open-new-tab="${block.openInNewTab}" data-underline="${block.underline}" data-font-size="${block.fontSize}" data-font-weight="${block.fontWeight}" data-align="${block.textAlign}" data-line-height="${block.lineHeight}" data-color="${block.color || '#0066cc'}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" data-padding-x="${block.paddingX || 0}" data-padding-y="${block.paddingY || 0}" style="text-align: ${block.textAlign}; ${margin} ${padding}"><a href="${escapeHtml(block.url || '#')}"${target} style="font-size: ${block.fontSize}px; font-weight: ${block.fontWeight}; line-height: ${block.lineHeight}; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces; ${color} ${textDecoration}">${escapeHtml(block.text || 'Click here')}</a></div>`;
+      const color = block.color ? `color: ${block.color};` : "color: #0066cc;";
+      const textDecoration = block.underline
+        ? "text-decoration: underline;"
+        : "text-decoration: none;";
+      const target = block.openInNewTab
+        ? ' target="_blank" rel="noopener noreferrer"'
+        : "";
+      return `<div ${commonAttrs} data-text="${escapeHtml(block.text)}" data-url="${escapeHtml(block.url)}" data-open-new-tab="${block.openInNewTab}" data-underline="${block.underline}" data-font-size="${block.fontSize}" data-font-weight="${block.fontWeight}" data-align="${block.textAlign}" data-line-height="${block.lineHeight}" data-color="${block.color || "#0066cc"}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" data-padding-x="${block.paddingX || 0}" data-padding-y="${block.paddingY || 0}" style="text-align: ${block.textAlign}; ${margin} ${padding}"><a href="${escapeHtml(block.url || "#")}"${target} style="font-size: ${block.fontSize}px; font-weight: ${block.fontWeight}; line-height: ${block.lineHeight}; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces; ${color} ${textDecoration}">${escapeHtml(block.text || "Click here")}</a></div>`;
     }
-    
+
     case BLOCK_TYPES.DIVIDER:
-      return `<hr ${commonAttrs} data-thickness="${block.thickness}" data-style="${block.style}" data-color="${block.color || '#000000'}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="border: none; border-top: ${block.thickness}px ${block.style} ${block.color || '#000000'}; ${margin}" />`;
-    
+      return `<hr ${commonAttrs} data-thickness="${block.thickness}" data-style="${block.style}" data-color="${block.color || "#000000"}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="border: none; border-top: ${block.thickness}px ${block.style} ${block.color || "#000000"}; ${margin}" />`;
+
     case BLOCK_TYPES.IMAGE:
       return `<div ${commonAttrs} data-src="${escapeHtml(block.src)}" data-alt="${escapeHtml(block.alt)}" data-border-radius="${block.borderRadius}" data-max-height="${block.maxHeight}" data-alignment="${block.alignment}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${margin}"><img src="${escapeHtml(block.src)}" alt="${escapeHtml(block.alt)}" style="max-width: 100%; border-radius: ${block.borderRadius}px; max-height: ${block.maxHeight}px; display: block; margin: 0 auto;" /></div>`;
-    
+
     case BLOCK_TYPES.TEXT_INPUT:
-      return `<div ${commonAttrs} data-label="${escapeHtml(block.label)}" data-field-name="${block.fieldName}" data-placeholder="${escapeHtml(block.placeholder)}" data-required="${block.required}" data-validation="${block.validationType}" data-max-length="${block.maxLength || ''}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${margin}">
-  <label for="${block.fieldName}" style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px;">${escapeHtml(block.label)}${block.required ? ' <span style="color: #ef4444;">*</span>' : ''}</label>
-  <input type="text" id="${block.fieldName}" name="${block.fieldName}" placeholder="${escapeHtml(block.placeholder)}"${block.required ? ' required' : ''} style="width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" />
+      return `<div ${commonAttrs} data-label="${escapeHtml(block.label)}" data-field-name="${block.fieldName}" data-placeholder="${escapeHtml(block.placeholder)}" data-required="${block.required}" data-validation="${block.validationType}" data-max-length="${block.maxLength || ""}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${margin}">
+  <label for="${block.fieldName}" style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px;">${escapeHtml(block.label)}${block.required ? ' <span style="color: #ef4444;">*</span>' : ""}</label>
+  <input type="text" id="${block.fieldName}" name="${block.fieldName}" placeholder="${escapeHtml(block.placeholder)}"${block.required ? ' required aria-required="true"' : ""} style="width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" />
 </div>`;
-    
+
     case BLOCK_TYPES.TEXTAREA:
-      return `<div ${commonAttrs} data-label="${escapeHtml(block.label)}" data-field-name="${block.fieldName}" data-placeholder="${escapeHtml(block.placeholder)}" data-required="${block.required}" data-rows="${block.rows}" data-max-length="${block.maxLength || ''}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${margin}">
-  <label for="${block.fieldName}" style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px;">${escapeHtml(block.label)}${block.required ? ' <span style="color: #ef4444;">*</span>' : ''}</label>
-  <textarea id="${block.fieldName}" name="${block.fieldName}" rows="${block.rows}" placeholder="${escapeHtml(block.placeholder)}"${block.required ? ' required' : ''} style="width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; resize: vertical;"></textarea>
+      return `<div ${commonAttrs} data-label="${escapeHtml(block.label)}" data-field-name="${block.fieldName}" data-placeholder="${escapeHtml(block.placeholder)}" data-required="${block.required}" data-rows="${block.rows}" data-max-length="${block.maxLength || ""}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${margin}">
+  <label for="${block.fieldName}" style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px;">${escapeHtml(block.label)}${block.required ? ' <span style="color: #ef4444;">*</span>' : ""}</label>
+  <textarea id="${block.fieldName}" name="${block.fieldName}" rows="${block.rows}" placeholder="${escapeHtml(block.placeholder)}"${block.required ? ' required aria-required="true"' : ""} style="width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; resize: vertical;"></textarea>
 </div>`;
-    
+
     case BLOCK_TYPES.DROPDOWN:
-      return `<div ${commonAttrs} data-label="${escapeHtml(block.label)}" data-field-name="${block.fieldName}" data-required="${block.required}" data-options="${escapeHtml(JSON.stringify(block.options || []))}" data-default-value="${escapeHtml(block.defaultValue || '')}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${margin}">
-  <label for="${block.fieldName}" style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px;">${escapeHtml(block.label)}${block.required ? ' <span style="color: #ef4444;">*</span>' : ''}</label>
-  <select id="${block.fieldName}" name="${block.fieldName}"${block.required ? ' required' : ''} style="width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; background: white;">
+      return `<div ${commonAttrs} data-label="${escapeHtml(block.label)}" data-field-name="${block.fieldName}" data-required="${block.required}" data-options="${escapeHtml(JSON.stringify(block.options || []))}" data-default-value="${escapeHtml(block.defaultValue || "")}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${margin}">
+  <label for="${block.fieldName}" style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px;">${escapeHtml(block.label)}${block.required ? ' <span style="color: #ef4444;">*</span>' : ""}</label>
+  <select id="${block.fieldName}" name="${block.fieldName}"${block.required ? ' required aria-required="true"' : ""} style="width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; background: white;">
     <option value="">Select an option...</option>
-    ${(block.options || []).map(opt => `<option value="${escapeHtml(opt)}">${escapeHtml(opt)}</option>`).join('\n    ')}
+    ${(block.options || []).map((opt) => `<option value="${escapeHtml(opt)}">${escapeHtml(opt)}</option>`).join("\n    ")}
   </select>
 </div>`;
-    
+
     case BLOCK_TYPES.RADIO_GROUP:
       return `<fieldset ${commonAttrs} data-label="${escapeHtml(block.label)}" data-field-name="${block.fieldName}" data-required="${block.required}" data-options="${escapeHtml(JSON.stringify(block.options || []))}" data-layout="${block.layout}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${margin}">
-  <legend style="font-size: 14px; font-weight: 500; margin-bottom: 8px;">${escapeHtml(block.label)}${block.required ? ' <span style="color: #ef4444;">*</span>' : ''}</legend>
-  <div style="display: flex; flex-direction: ${block.layout === 'horizontal' ? 'row' : 'column'}; gap: 8px;">
-    ${(block.options || []).map((opt, i) => `<label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;"><input type="radio" name="${block.fieldName}" value="${escapeHtml(opt)}"${block.required && i === 0 ? ' required' : ''} /> ${escapeHtml(opt)}</label>`).join('\n    ')}
+  <legend style="font-size: 14px; font-weight: 500; margin-bottom: 8px;">${escapeHtml(block.label)}${block.required ? ' <span style="color: #ef4444;">*</span>' : ""}</legend>
+  <div style="display: flex; flex-direction: ${block.layout === "horizontal" ? "row" : "column"}; gap: 8px;">
+    ${(block.options || []).map((opt, i) => `<label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;"><input type="radio" name="${block.fieldName}" value="${escapeHtml(opt)}"${block.required && i === 0 ? ' required aria-required="true"' : ""} /> ${escapeHtml(opt)}</label>`).join("\n    ")}
   </div>
 </fieldset>`;
-    
+
     case BLOCK_TYPES.CHECKBOX_GROUP:
       return `<fieldset ${commonAttrs} data-label="${escapeHtml(block.label)}" data-field-name="${block.fieldName}" data-required="${block.required}" data-options="${escapeHtml(JSON.stringify(block.options || []))}" data-layout="${block.layout}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${margin}">
-  <legend style="font-size: 14px; font-weight: 500; margin-bottom: 8px;">${escapeHtml(block.label)}${block.required ? ' <span style="color: #ef4444;">*</span>' : ''}</legend>
-  <div style="display: flex; flex-direction: ${block.layout === 'horizontal' ? 'row' : 'column'}; gap: 8px;">
-    ${(block.options || []).map(opt => `<label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;"><input type="checkbox" name="${block.fieldName}" value="${escapeHtml(opt)}" /> ${escapeHtml(opt)}</label>`).join('\n    ')}
+  <legend style="font-size: 14px; font-weight: 500; margin-bottom: 8px;">${escapeHtml(block.label)}${block.required ? ' <span style="color: #ef4444;">*</span>' : ""}</legend>
+  <div style="display: flex; flex-direction: ${block.layout === "horizontal" ? "row" : "column"}; gap: 8px;">
+    ${(block.options || []).map((opt) => `<label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;"><input type="checkbox" name="${block.fieldName}" value="${escapeHtml(opt)}" /> ${escapeHtml(opt)}</label>`).join("\n    ")}
   </div>
 </fieldset>`;
-    
+
     case BLOCK_TYPES.SINGLE_CHECKBOX:
       return `<div ${commonAttrs} data-label="${escapeHtml(block.label)}" data-field-name="${block.fieldName}" data-required="${block.required}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${margin}">
   <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 14px; cursor: pointer; line-height: 1.5;">
-    <input type="checkbox" name="${block.fieldName}"${block.required ? ' required' : ''} style="margin-top: 4px; flex-shrink: 0;" />
+    <input type="checkbox" name="${block.fieldName}"${block.required ? ' required aria-required="true"' : ""} style="margin-top: 4px; flex-shrink: 0;" />
     <span>${preservePlaceholders(block.label)}</span>
   </label>
 </div>`;
-    
+
     case BLOCK_TYPES.DATE_PICKER:
       return `<div ${commonAttrs} data-label="${escapeHtml(block.label)}" data-field-name="${block.fieldName}" data-required="${block.required}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${margin}">
-  <label for="${block.fieldName}" style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px;">${escapeHtml(block.label)}${block.required ? ' <span style="color: #ef4444;">*</span>' : ''}</label>
-  <input type="date" id="${block.fieldName}" name="${block.fieldName}"${block.required ? ' required' : ''} style="width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" />
+  <label for="${block.fieldName}" style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px;">${escapeHtml(block.label)}${block.required ? ' <span style="color: #ef4444;">*</span>' : ""}</label>
+  <input type="date" id="${block.fieldName}" name="${block.fieldName}"${block.required ? ' required aria-required="true"' : ""} style="width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" />
 </div>`;
-    
+
     case BLOCK_TYPES.SIGNATURE: {
       const sigBlock = block as SignatureBlockProps;
-      return `<div ${commonAttrs} id="${sigBlock.fieldName}" data-label="${escapeHtml(sigBlock.label)}" data-field-name="${sigBlock.fieldName}" data-required="${sigBlock.required}" data-signature-url="${escapeHtml(sigBlock.signatureUrl || '')}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" class="signature-area" style="${margin}">
+      return `<div ${commonAttrs} id="${sigBlock.fieldName}" data-label="${escapeHtml(sigBlock.label)}" data-field-name="${sigBlock.fieldName}" data-required="${sigBlock.required}" data-signature-url="${escapeHtml(sigBlock.signatureUrl || "")}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" class="signature-area" style="${margin}">
   <div class="signature-display" style="display: none;"></div>
-  <span class="sig-label">${preservePlaceholders(sigBlock.label || 'Signature')}${sigBlock.required ? ' <span style="color:#ef4444;">*</span>' : ''}</span>
-  <button type="button" data-signature-button data-field="${sigBlock.fieldName}" class="sign-button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> Sign</button>
-  <input type="hidden" name="${sigBlock.fieldName}" value="" data-signature-value />
+  <span class="sig-label">${preservePlaceholders(sigBlock.label || "Signature")}${sigBlock.required ? ' <span style="color:#ef4444;">*</span>' : ""}</span>
+  <button type="button" data-signature-button data-field="${sigBlock.fieldName}" class="sign-button" aria-label="Sign: ${escapeHtml(sigBlock.label || "Signature")}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> Sign</button>
+  <input type="hidden" name="${sigBlock.fieldName}" value="" data-signature-value${sigBlock.required ? ' aria-required="true"' : ""} />
 </div>`;
     }
-    
+
     case BLOCK_TYPES.TABLE: {
       const tableBlock = block as TableBlockProps;
       const rows = tableBlock.rows || [];
       const colCount = rows[0]?.length || 1;
-      const colWidths = tableBlock.columnWidths && tableBlock.columnWidths.length === colCount
-        ? tableBlock.columnWidths
-        : Array(colCount).fill(100 / colCount);
+      const colWidths =
+        tableBlock.columnWidths && tableBlock.columnWidths.length === colCount
+          ? tableBlock.columnWidths
+          : Array(colCount).fill(100 / colCount);
       let tableHtml = `<table ${commonAttrs} data-header-row="${tableBlock.headerRow}" data-rows="${escapeHtml(JSON.stringify(rows))}" data-column-widths="${escapeHtml(JSON.stringify(colWidths))}" data-row-heights="${escapeHtml(JSON.stringify(tableBlock.rowHeights || []))}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="width: 100%; border-collapse: collapse; table-layout: fixed; ${margin}">\n`;
-      
-      tableHtml += '  <colgroup>\n';
-      colWidths.forEach(w => {
+
+      tableHtml += "  <colgroup>\n";
+      colWidths.forEach((w) => {
         tableHtml += `    <col style="width: ${Math.round(w * 100) / 100}%;" />\n`;
       });
-      tableHtml += '  </colgroup>\n';
-      
+      tableHtml += "  </colgroup>\n";
+
       if (tableBlock.headerRow && rows.length > 0) {
         const headerHeight = tableBlock.rowHeights?.[0];
-      tableHtml += '  <thead>\n    <tr style="background-color: rgba(0,0,0,0.05);' + (headerHeight && headerHeight > 0 ? ' height: ' + headerHeight + 'px;' : '') + '">\n';
-        rows[0].forEach(cell => {
+        tableHtml +=
+          '  <thead>\n    <tr style="background-color: rgba(0,0,0,0.05);' +
+          (headerHeight && headerHeight > 0
+            ? " height: " + headerHeight + "px;"
+            : "") +
+          '">\n';
+        rows[0].forEach((cell) => {
           tableHtml += `      <th style="padding: 8px; border: 1px solid #000; font-weight: bold; text-align: left; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces;">${preservePlaceholders(cell)}</th>\n`;
         });
-        tableHtml += '    </tr>\n  </thead>\n';
+        tableHtml += "    </tr>\n  </thead>\n";
       }
-      
-      tableHtml += '  <tbody>\n';
+
+      tableHtml += "  <tbody>\n";
       rows.slice(tableBlock.headerRow ? 1 : 0).forEach((row, rowIdx) => {
         const actualRowIdx = rowIdx + (tableBlock.headerRow ? 1 : 0);
         const bodyRowHeight = tableBlock.rowHeights?.[actualRowIdx];
         const rowStyles: string[] = [];
-        if (rowIdx % 2 === 1) rowStyles.push('background-color: rgba(0,0,0,0.02)');
-        if (bodyRowHeight && bodyRowHeight > 0) rowStyles.push('height: ' + bodyRowHeight + 'px');
-        const bgColor = rowStyles.length > 0 ? ' style="' + rowStyles.join('; ') + ';"' : '';
+        if (rowIdx % 2 === 1)
+          rowStyles.push("background-color: rgba(0,0,0,0.02)");
+        if (bodyRowHeight && bodyRowHeight > 0)
+          rowStyles.push("height: " + bodyRowHeight + "px");
+        const bgColor =
+          rowStyles.length > 0 ? ' style="' + rowStyles.join("; ") + ';"' : "";
         tableHtml += `    <tr${bgColor}>\n`;
-        row.forEach(cell => {
+        row.forEach((cell) => {
           tableHtml += `      <td style="padding: 8px; border: 1px solid #000; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces;">${preservePlaceholders(cell)}</td>\n`;
         });
-        tableHtml += '    </tr>\n';
+        tableHtml += "    </tr>\n";
       });
-      tableHtml += '  </tbody>\n</table>';
+      tableHtml += "  </tbody>\n</table>";
       return tableHtml;
     }
-    
+
     case BLOCK_TYPES.LIST: {
       const listBlock = block as ListBlockProps;
-      const tag = listBlock.listType === 'ordered' ? 'ol' : 'ul';
-      const listStyle = listBlock.listType === 'ordered' ? 'list-style-type: decimal;' : 'list-style-type: disc;';
-      
+      const tag = listBlock.listType === "ordered" ? "ol" : "ul";
+      const listStyle =
+        listBlock.listType === "ordered"
+          ? "list-style-type: decimal;"
+          : "list-style-type: disc;";
+
       let listHtml = `<${tag} ${commonAttrs} data-list-type="${listBlock.listType}" data-items="${escapeHtml(JSON.stringify(listBlock.items || []))}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${listStyle} margin-left: 24px; ${margin}">\n`;
-      (listBlock.items || []).forEach(item => {
+      (listBlock.items || []).forEach((item) => {
         listHtml += `  <li style="padding: 4px 0;">${preservePlaceholders(item)}</li>\n`;
       });
       listHtml += `</${tag}>`;
       return listHtml;
     }
-    
+
     case BLOCK_TYPES.BUTTON: {
       const btnBlock = block as ButtonBlockProps;
       const variantStyles: Record<string, string> = {
-        primary: 'background-color: #3b82f6; color: white; border: none;',
-        secondary: 'background-color: #f1f5f9; color: #1e293b; border: none;',
-        outline: 'background-color: transparent; color: #1e293b; border: 1px solid #e2e8f0;',
+        primary: "background-color: #3b82f6; color: white; border: none;",
+        secondary: "background-color: #f1f5f9; color: #1e293b; border: none;",
+        outline:
+          "background-color: transparent; color: #1e293b; border: 1px solid #e2e8f0;",
       };
-      const btnId = btnBlock.buttonType === 'submit' ? 'id="form-submit"' : '';
-      
+      const btnId = btnBlock.buttonType === "submit" ? 'id="form-submit"' : "";
+
       return `<button ${commonAttrs} ${btnId} data-label="${escapeHtml(btnBlock.label)}" data-button-type="${btnBlock.buttonType}" data-variant="${btnBlock.variant}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" type="${btnBlock.buttonType}" style="padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; ${variantStyles[btnBlock.variant] || variantStyles.primary} ${margin}">${escapeHtml(btnBlock.label)}</button>`;
     }
-    
+
     default:
       return `<div style="${margin}">Unknown block type</div>`;
   }
@@ -193,25 +250,56 @@ function renderBlockHTML(block: EditorBlock): string {
 function renderSectionHTML(section: EditorSection): string {
   const sectionAttr = `${EDITOR_SECTION_ATTR}="true" ${EDITOR_LAYOUT_ATTR}="${section.columns}" data-section-id="${section.id}"`;
   const sectionGap = 24;
-  
+  const sectionPaddingTop = section.paddingTop ?? 12;
+  const sectionPaddingRight = section.paddingRight ?? 12;
+  const sectionPaddingBottom = section.paddingBottom ?? 12;
+  const sectionPaddingLeft = section.paddingLeft ?? 12;
+  const sectionColumnGap = section.columnGap ?? 24;
+  const sectionBackground = section.backgroundColor || "";
+  const sectionTextColor = section.textColor || "";
+  const sectionDataAttrs = [
+    `data-section-padding-top="${sectionPaddingTop}"`,
+    `data-section-padding-right="${sectionPaddingRight}"`,
+    `data-section-padding-bottom="${sectionPaddingBottom}"`,
+    `data-section-padding-left="${sectionPaddingLeft}"`,
+    `data-section-gap="${sectionColumnGap}"`,
+    sectionBackground
+      ? `data-section-bg="${escapeHtml(sectionBackground)}"`
+      : "",
+    sectionTextColor
+      ? `data-section-text-color="${escapeHtml(sectionTextColor)}"`
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const sectionStyle = [
+    `margin-bottom: ${sectionGap}px`,
+    `padding: ${sectionPaddingTop}px ${sectionPaddingRight}px ${sectionPaddingBottom}px ${sectionPaddingLeft}px`,
+    sectionBackground ? `background-color: ${sectionBackground}` : "",
+    sectionTextColor ? `color: ${sectionTextColor}` : "",
+  ]
+    .filter(Boolean)
+    .join("; ");
+
   if (section.columns === 1) {
     const blocks = section.blocks[0] || [];
-    return `<div ${sectionAttr} style="margin-bottom: ${sectionGap}px;">
+    return `<div ${sectionAttr} ${sectionDataAttrs} style="${sectionStyle}">
   <div ${EDITOR_COLUMN_ATTR}="0">
-${blocks.map(b => '    ' + renderBlockHTML(b)).join('\n')}
+${blocks.map((b) => "    " + renderBlockHTML(b)).join("\n")}
   </div>
 </div>`;
   }
-  
+
   const colWidth = `${100 / section.columns}%`;
-  const columns = section.blocks.map((col, idx) => 
-    `  <div ${EDITOR_COLUMN_ATTR}="${idx}" style="box-sizing: border-box;">
-${col.map(b => '    ' + renderBlockHTML(b)).join('\n')}
-  </div>`
+  const columns = section.blocks.map(
+    (col, idx) =>
+      `  <div ${EDITOR_COLUMN_ATTR}="${idx}" style="box-sizing: border-box;">
+${col.map((b) => "    " + renderBlockHTML(b)).join("\n")}
+  </div>`,
   );
-  
-  return `<div ${sectionAttr} style="display: grid; grid-template-columns: repeat(${section.columns}, 1fr); gap: 24px; margin-bottom: ${sectionGap}px;">
-${columns.join('\n')}
+
+  return `<div ${sectionAttr} ${sectionDataAttrs} style="display: grid; grid-template-columns: repeat(${section.columns}, 1fr); gap: ${sectionColumnGap}px; ${sectionStyle}">
+${columns.join("\n")}
 </div>`;
 }
 
@@ -480,6 +568,19 @@ function generateFormScript(): string {
 
 export function exportToHTML(sections: EditorSection[]): string {
   const formScript = generateFormScript();
+  const sectionsHTML = sections.map((s) => renderSectionHTML(s)).join("\n");
+
+  // Architecture spec: warn if content exceeds 200KB
+  try {
+    const estimatedSize = new Blob([sectionsHTML]).size;
+    if (estimatedSize > 200 * 1024) {
+      console.warn(
+        `[EXPORT] Content exceeds 200KB (${Math.round(estimatedSize / 1024)}KB). Consider reducing content.`,
+      );
+    }
+  } catch {
+    /* Blob not available in all envs */
+  }
 
   return `<!DOCTYPE html>
 <html lang="en" ${EDITOR_VERSION_ATTR}="${EDITOR_VERSION}">
@@ -492,7 +593,14 @@ export function exportToHTML(sections: EditorSection[]): string {
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Allura&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
+    html { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+    html:hover { scrollbar-color: rgba(0,0,0,0.14) transparent; }
+    html::-webkit-scrollbar { width: 6px; height: 6px; }
+    html::-webkit-scrollbar-track { background: transparent; }
+    html::-webkit-scrollbar-thumb { background: transparent; border-radius: 999px; }
+    html:hover::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.14); }
+    html:hover::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.28); }
+    body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       color: #1e293b; 
       background: #f1f5f9;
@@ -613,7 +721,7 @@ export function exportToHTML(sections: EditorSection[]): string {
 </head>
 <body>
   <form novalidate>
-${sections.map(s => renderSectionHTML(s)).join('\n')}
+${sectionsHTML}
   </form>
 
   <div id="esign-overlay" class="esign-overlay">
@@ -651,5 +759,5 @@ ${formScript}
 }
 
 export function exportBodyHTML(sections: EditorSection[]): string {
-  return sections.map(s => renderSectionHTML(s)).join('\n');
+  return sections.map((s) => renderSectionHTML(s)).join("\n");
 }

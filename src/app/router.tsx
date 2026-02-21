@@ -17,10 +17,9 @@ const router = createBrowserRouter([
     children: [
       // Feature routes
       dashboardRoutes,
-     
     ],
   },
- formEditorRoutes,
+  formEditorRoutes,
 
   // 404 Catch-all route - MUST be last
   {
