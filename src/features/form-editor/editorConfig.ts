@@ -1,9 +1,9 @@
 import { v4 as uuidv4 } from 'uuid';
 
-// ─── Block Type Constants ────────────────────────────────────────────
 export const BLOCK_TYPES = {
   HEADING: 'heading',
   PARAGRAPH: 'paragraph',
+  HYPERLINK: 'hyperlink',
   DIVIDER: 'divider',
   IMAGE: 'image',
   TEXT_INPUT: 'text-input',
@@ -13,12 +13,11 @@ export const BLOCK_TYPES = {
   CHECKBOX_GROUP: 'checkbox-group',
   SINGLE_CHECKBOX: 'single-checkbox',
   DATE_PICKER: 'date-picker',
-  FILE_UPLOAD: 'file-upload',
   SIGNATURE: 'signature',
   TABLE: 'table',
   LIST: 'list',
   BUTTON: 'button',
-  RAW_HTML: 'raw-html', // NEW: Preserves original HTML structure
+  RAW_HTML: 'raw-html',
 } as const;
 
 export type BlockType = typeof BLOCK_TYPES[keyof typeof BLOCK_TYPES];
@@ -30,7 +29,6 @@ export const BLOCK_CATEGORIES = {
 
 export type BlockCategory = typeof BLOCK_CATEGORIES[keyof typeof BLOCK_CATEGORIES];
 
-// ─── Block interfaces ────────────────────────────────────────────────
 export interface BaseBlockProps {
   id: string;
   type: BlockType;
@@ -47,7 +45,7 @@ export interface BaseBlockProps {
 export interface HeadingBlockProps extends BaseBlockProps {
   type: typeof BLOCK_TYPES.HEADING;
   content: string;
-  htmlContent?: string; // Preserves original HTML with inline marks
+  htmlContent?: string;
   level: 'h1' | 'h2' | 'h3' | 'h4';
   fontSize: number;
   fontWeight: number;
@@ -59,12 +57,25 @@ export interface HeadingBlockProps extends BaseBlockProps {
 export interface ParagraphBlockProps extends BaseBlockProps {
   type: typeof BLOCK_TYPES.PARAGRAPH;
   content: string;
-  htmlContent?: string; // Preserves original HTML with inline marks
+  htmlContent?: string;
   fontSize: number;
   fontWeight: number;
   textAlign: string;
   lineHeight: number;
   color: string;
+}
+
+export interface HyperlinkBlockProps extends BaseBlockProps {
+  type: typeof BLOCK_TYPES.HYPERLINK;
+  text: string;
+  url: string;
+  openInNewTab: boolean;
+  fontSize: number;
+  fontWeight: number;
+  textAlign: string;
+  lineHeight: number;
+  color: string;
+  underline: boolean;
 }
 
 export interface DividerBlockProps extends BaseBlockProps {
@@ -150,24 +161,13 @@ export interface DatePickerBlockProps extends BaseBlockProps {
   helpText: string;
 }
 
-export interface FileUploadBlockProps extends BaseBlockProps {
-  type: typeof BLOCK_TYPES.FILE_UPLOAD;
-  label: string;
-  required: boolean;
-  fieldName: string;
-  helpText: string;
-  acceptTypes: string;
-  maxSize: string;
-  multiple: boolean;
-}
-
 export interface SignatureBlockProps extends BaseBlockProps {
   type: typeof BLOCK_TYPES.SIGNATURE;
   label: string;
   required: boolean;
   fieldName: string;
   helpText: string;
-  signatureUrl?: string; // URL of inserted signature image
+  signatureUrl?: string;
 }
 
 export interface TableBlockProps extends BaseBlockProps {
@@ -175,6 +175,8 @@ export interface TableBlockProps extends BaseBlockProps {
   htmlContent: string;
   rows: string[][];
   headerRow: boolean;
+  columnWidths?: number[];
+  rowHeights?: number[];
 }
 
 export interface ListBlockProps extends BaseBlockProps {
@@ -191,16 +193,16 @@ export interface ButtonBlockProps extends BaseBlockProps {
   variant: 'primary' | 'secondary' | 'outline';
 }
 
-// NEW: Raw HTML block - preserves original HTML without conversion
 export interface RawHTMLBlockProps extends BaseBlockProps {
   type: typeof BLOCK_TYPES.RAW_HTML;
   htmlContent: string;
-  originalStyles?: string; // Preserve original CSS
+  originalStyles?: string;
 }
 
 export type EditorBlock =
   | HeadingBlockProps
   | ParagraphBlockProps
+  | HyperlinkBlockProps
   | DividerBlockProps
   | ImageBlockProps
   | TextInputBlockProps
@@ -210,21 +212,18 @@ export type EditorBlock =
   | CheckboxGroupBlockProps
   | SingleCheckboxBlockProps
   | DatePickerBlockProps
-  | FileUploadBlockProps
   | SignatureBlockProps
   | TableBlockProps
   | ListBlockProps
   | ButtonBlockProps
   | RawHTMLBlockProps;
 
-// ─── Section interface ───────────────────────────────────────────────
 export interface EditorSection {
   id: string;
   columns: 1 | 2 | 3;
-  blocks: EditorBlock[][];  // blocks[columnIndex][blockIndex]
+  blocks: EditorBlock[][];
 }
 
-// ─── Editor state ────────────────────────────────────────────────────
 export interface EditorState {
   sections: EditorSection[];
   selectedBlockId: string | null;
@@ -236,7 +235,6 @@ export interface EditorState {
   isDragging: boolean;
 }
 
-// ─── Block library items ─────────────────────────────────────────────
 export interface BlockLibraryItem {
   type: BlockType;
   label: string;
@@ -247,6 +245,7 @@ export interface BlockLibraryItem {
 export const BLOCK_LIBRARY: BlockLibraryItem[] = [
   { type: BLOCK_TYPES.HEADING, label: 'Heading', category: BLOCK_CATEGORIES.CONTENT, icon: 'Heading' },
   { type: BLOCK_TYPES.PARAGRAPH, label: 'Paragraph', category: BLOCK_CATEGORIES.CONTENT, icon: 'AlignLeft' },
+  { type: BLOCK_TYPES.HYPERLINK, label: 'Hyperlink', category: BLOCK_CATEGORIES.CONTENT, icon: 'Link' },
   { type: BLOCK_TYPES.DIVIDER, label: 'Divider', category: BLOCK_CATEGORIES.CONTENT, icon: 'Minus' },
   { type: BLOCK_TYPES.IMAGE, label: 'Image', category: BLOCK_CATEGORIES.CONTENT, icon: 'Image' },
   { type: BLOCK_TYPES.TABLE, label: 'Table', category: BLOCK_CATEGORIES.CONTENT, icon: 'Table2' },
@@ -258,12 +257,10 @@ export const BLOCK_LIBRARY: BlockLibraryItem[] = [
   { type: BLOCK_TYPES.CHECKBOX_GROUP, label: 'Checkbox Group', category: BLOCK_CATEGORIES.FORM, icon: 'CheckSquare' },
   { type: BLOCK_TYPES.SINGLE_CHECKBOX, label: 'Agreement Checkbox', category: BLOCK_CATEGORIES.FORM, icon: 'Square' },
   { type: BLOCK_TYPES.DATE_PICKER, label: 'Date Picker', category: BLOCK_CATEGORIES.FORM, icon: 'Calendar' },
-  { type: BLOCK_TYPES.FILE_UPLOAD, label: 'File Upload', category: BLOCK_CATEGORIES.FORM, icon: 'Upload' },
   { type: BLOCK_TYPES.SIGNATURE, label: 'Signature', category: BLOCK_CATEGORIES.FORM, icon: 'PenTool' },
   { type: BLOCK_TYPES.BUTTON, label: 'Button', category: BLOCK_CATEGORIES.FORM, icon: 'MousePointerClick' },
 ];
 
-// ─── Default block factory ───────────────────────────────────────────
 export function getDefaultBlockProps(type: BlockType): EditorBlock {
   const base: BaseBlockProps = {
     id: uuidv4(),
@@ -282,6 +279,8 @@ export function getDefaultBlockProps(type: BlockType): EditorBlock {
       return { ...base, type, content: 'Heading Text', level: 'h2', fontSize: 24, fontWeight: 600, textAlign: 'left', lineHeight: 1.3, color: '', marginBottom: 12 };
     case BLOCK_TYPES.PARAGRAPH:
       return { ...base, type, content: 'Enter your text here. This paragraph block supports rich content for legal agreements, descriptions, and professional documents.', fontSize: 14, fontWeight: 400, textAlign: 'left', lineHeight: 1.6, color: '' };
+    case BLOCK_TYPES.HYPERLINK:
+      return { ...base, type, text: 'Click here', url: 'https://example.com', openInNewTab: true, fontSize: 14, fontWeight: 400, textAlign: 'left', lineHeight: 1.6, color: '#0066cc', underline: true };
     case BLOCK_TYPES.DIVIDER:
       return { ...base, type, thickness: 1, style: 'solid', color: '#000000', marginTop: 16, marginBottom: 16 };
     case BLOCK_TYPES.IMAGE:
@@ -300,8 +299,6 @@ export function getDefaultBlockProps(type: BlockType): EditorBlock {
       return { ...base, type, label: 'I agree to the terms and conditions outlined in this agreement.', required: false, fieldName: `agreement_${Date.now()}` };
     case BLOCK_TYPES.DATE_PICKER:
       return { ...base, type, label: 'Date', required: false, fieldName: `date_${Date.now()}`, helpText: '', width: 50 };
-    case BLOCK_TYPES.FILE_UPLOAD:
-      return { ...base, type, label: 'File Upload', required: false, fieldName: `file_${Date.now()}`, helpText: '', acceptTypes: '.pdf,.doc,.docx,.jpg,.png', maxSize: '10MB', multiple: false };
     case BLOCK_TYPES.SIGNATURE:
       return { ...base, type, label: 'Signature', required: false, fieldName: `signature_${Date.now()}`, helpText: 'Click to insert signature', signatureUrl: '' };
     case BLOCK_TYPES.TABLE:
@@ -310,6 +307,8 @@ export function getDefaultBlockProps(type: BlockType): EditorBlock {
       return { ...base, type, listType: 'unordered', items: ['Item 1', 'Item 2', 'Item 3'] };
     case BLOCK_TYPES.BUTTON:
       return { ...base, type, label: 'Submit', buttonType: 'submit', variant: 'primary' };
+    case BLOCK_TYPES.RAW_HTML:
+      return { ...base, type, htmlContent: '', originalStyles: '' };
     default:
       return base as EditorBlock;
   }
@@ -323,7 +322,6 @@ export function createSection(columns: 1 | 2 | 3 = 1): EditorSection {
   };
 }
 
-// ─── Initial demo state ──────────────────────────────────────────────
 export function getInitialState(): EditorState {
   const introSection = createSection(1);
   introSection.blocks[0] = [

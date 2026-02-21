@@ -6,6 +6,7 @@ export const ACTIONS = {
   SET_SECTIONS: 'SET_SECTIONS',
   ADD_SECTION: 'ADD_SECTION',
   REMOVE_SECTION: 'REMOVE_SECTION',
+  REORDER_SECTIONS: 'REORDER_SECTIONS',
   ADD_BLOCK: 'ADD_BLOCK',
   REMOVE_BLOCK: 'REMOVE_BLOCK',
   UPDATE_BLOCK: 'UPDATE_BLOCK',
@@ -26,6 +27,7 @@ export type EditorAction =
   | { type: typeof ACTIONS.SET_SECTIONS; payload: EditorSection[] }
   | { type: typeof ACTIONS.ADD_SECTION; payload: { section: EditorSection; index?: number } }
   | { type: typeof ACTIONS.REMOVE_SECTION; payload: string }
+  | { type: typeof ACTIONS.REORDER_SECTIONS; payload: { oldIndex: number; newIndex: number } }
   | { type: typeof ACTIONS.ADD_BLOCK; payload: { sectionId: string; columnIndex: number; block: EditorBlock; index?: number } }
   | { type: typeof ACTIONS.REMOVE_BLOCK; payload: string }
   | { type: typeof ACTIONS.UPDATE_BLOCK; payload: { blockId: string; updates: Partial<EditorBlock> } }
@@ -59,18 +61,34 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       return { ...state, sections: newSections };
     }
 
-    case ACTIONS.REMOVE_SECTION:
+    case ACTIONS.REMOVE_SECTION: {
+      const removedSection = state.sections.find(s => s.id === action.payload);
+      const removedBlockIds = new Set(
+        removedSection ? removedSection.blocks.flatMap(col => col.map(b => b.id)) : []
+      );
       return {
         ...state,
         sections: state.sections.filter(s => s.id !== action.payload),
         selectedSectionId: state.selectedSectionId === action.payload ? null : state.selectedSectionId,
+        selectedBlockId: removedBlockIds.has(state.selectedBlockId ?? '') ? null : state.selectedBlockId,
       };
+    }
+
+    case ACTIONS.REORDER_SECTIONS: {
+      const { oldIndex, newIndex } = action.payload;
+      const sections = [...state.sections];
+      if (oldIndex < 0 || oldIndex >= sections.length || newIndex < 0 || newIndex >= sections.length) return state;
+      const [moved] = sections.splice(oldIndex, 1);
+      sections.splice(newIndex, 0, moved);
+      return { ...state, sections };
+    }
 
     case ACTIONS.ADD_BLOCK: {
       const { sectionId, columnIndex, block, index } = action.payload;
       const newSections = state.sections.map(section => {
         if (section.id !== sectionId) return section;
         const newBlocks = [...section.blocks];
+        if (columnIndex < 0 || columnIndex >= newBlocks.length) return section;
         const col = [...newBlocks[columnIndex]];
         if (index !== undefined) col.splice(index, 0, block);
         else col.push(block);
@@ -118,6 +136,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         newSections = newSections.map(section => {
           if (section.id !== toSectionId) return section;
           const newBlocks = [...section.blocks];
+          if (toColumnIndex < 0 || toColumnIndex >= newBlocks.length) return section;
           const col = [...newBlocks[toColumnIndex]];
           col.splice(toIndex !== undefined ? toIndex : col.length, 0, movedBlock!);
           newBlocks[toColumnIndex] = col;
@@ -132,7 +151,9 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const newSections = state.sections.map(section => {
         if (section.id !== sectionId) return section;
         const newBlocks = [...section.blocks];
+        if (columnIndex < 0 || columnIndex >= newBlocks.length) return section;
         const col = [...newBlocks[columnIndex]];
+        if (oldIndex < 0 || oldIndex >= col.length || newIndex < 0 || newIndex >= col.length) return section;
         const [moved] = col.splice(oldIndex, 1);
         col.splice(newIndex, 0, moved);
         newBlocks[columnIndex] = col;

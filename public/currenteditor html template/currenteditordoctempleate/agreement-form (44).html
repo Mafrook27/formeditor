@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en" data-editor-version="1">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agreement Form</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Allura&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      color: #1e293b; 
+      background: #f1f5f9;
+      font-size: 14px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    form { 
+      max-width: 800px; 
+      margin: 32px auto; 
+      padding: 40px; 
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+    }
+    h1, h2, h3, h4, h5, h6 { font-weight: 600; line-height: 1.3; color: #0f172a; }
+    p { word-wrap: break-word; }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    td, th { padding: 8px; border: 1px solid #000; vertical-align: top; font-size: inherit; word-wrap: break-word; }
+    th { font-weight: bold; }
+    input, select, textarea { 
+      outline: none; 
+      font-family: inherit; 
+      font-size: inherit;
+      box-sizing: border-box;
+    }
+    input:focus, select:focus, textarea:focus { 
+      border-color: #3b82f6; 
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.1); 
+    }
+    fieldset { border: none; padding: 0; }
+    legend { font-size: 14px; font-weight: 500; margin-bottom: 8px; }
+    .placeholder { 
+      background-color: #b3d4fc; 
+      padding: 0 2px; 
+      border-radius: 2px;
+    }
+    .signature-area {
+      border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 16px;
+      text-align: left; position: relative; min-height: 48px;
+      display: flex; align-items: center; gap: 12px;
+      background: #fff; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .signature-area:hover { border-color: #94a3b8; }
+    .sig-label {
+      font-size: 14px; font-weight: 500; color: #334155; white-space: nowrap;
+    }
+    .sign-button {
+      background: #1e293b; color: #fff; border: none;
+      padding: 6px 16px; cursor: pointer; font-weight: 500; font-size: 13px;
+      border-radius: 4px; display: inline-flex; align-items: center; gap: 6px;
+      transition: background 0.15s; margin-left: auto;
+    }
+    .sign-button:hover { background: #334155; }
+    .sign-button:active { background: #0f172a; }
+    a { color: #2563eb; text-decoration: underline; }
+    a:hover { color: #1d4ed8; }
+    ul, ol { margin-left: 24px; }
+    li { padding: 4px 0; }
+    .esign-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.45); z-index: 10000;
+      align-items: center; justify-content: center;
+    }
+    .esign-modal {
+      background: #fff; border-radius: 8px; width: 480px; max-width: 94vw;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.2); overflow: hidden;
+      animation: esignFadeIn 0.15s ease-out;
+    }
+    @keyframes esignFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .esign-modal-header {
+      background: #1e293b; color: #fff;
+      padding: 16px 24px; font-size: 15px; font-weight: 600;
+    }
+    .esign-modal-body { padding: 20px 24px 16px; }
+    .esign-modal-footer { padding: 4px 24px 20px; display: flex; gap: 10px; justify-content: flex-end; }
+    .esign-btn {
+      padding: 8px 20px; border-radius: 4px; font-size: 13px; font-weight: 500;
+      cursor: pointer; border: none; transition: background 0.15s;
+    }
+    .esign-btn-primary { background: #1e293b; color: #fff; }
+    .esign-btn-primary:hover { background: #334155; }
+    .esign-btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+    .esign-btn-danger { background: #fff; color: #64748b; border: 1px solid #e2e8f0; }
+    .esign-btn-danger:hover { background: #f8fafc; color: #334155; }
+    .esign-checkbox-label {
+      display: flex; align-items: center; gap: 10px; font-size: 13px;
+      cursor: pointer; padding: 10px 12px; border: 1px solid #e2e8f0;
+      border-radius: 6px; transition: background 0.15s;
+    }
+    .esign-checkbox-label:hover { background: #f8fafc; }
+    .esign-checkbox-label input[type="checkbox"] { width: 16px; height: 16px; accent-color: #1e293b; flex-shrink: 0; }
+    .esign-sig-preview {
+      font-family: 'Allura', cursive; font-size: 30px; color: #0f172a;
+      padding: 10px 0 8px; border-bottom: 1px solid #cbd5e1; margin: 12px 0 6px;
+    }
+    .esign-legal { font-size: 12px; color: #94a3b8; line-height: 1.6; margin-top: 12px; }
+    .field-error-msg {
+      display: flex; align-items: center; gap: 6px;
+      color: #dc2626; font-size: 12px; font-weight: 500;
+      margin-top: 6px; padding: 0 2px;
+      animation: errorSlideIn 0.25s ease-out;
+    }
+    .field-error-msg svg { flex-shrink: 0; }
+    @keyframes errorSlideIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+    .field-invalid { border-color: #ef4444 !important; }
+    .field-invalid:focus { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important; }
+    @media (max-width: 768px) {
+      form { margin: 16px; padding: 24px; }
+      [data-editor-section] { 
+        grid-template-columns: 1fr !important; 
+        flex-direction: column !important;
+        gap: 16px !important;
+      }
+      [data-editor-column] { width: 100% !important; }
+      .esign-modal { width: 95vw; }
+    }
+  </style>
+</head>
+<body>
+  <form novalidate>
+<div data-editor-section="true" data-editor-layout="1" data-section-id="cebcfa85-d023-4da3-944b-d13e331fc4d8" style="margin-bottom: 24px;">
+  <div data-editor-column="0">
+    <h1 data-block-id="3b14d841-1ee3-4265-a45b-3768c0a5744d" data-block-type="heading" data-width="100" data-locked="false" data-margin-top="0" data-margin-bottom="4" data-level="h1" data-font-size="28" data-font-weight="700" data-align="center" data-line-height="1.3" data-color="" data-margin-left="0" data-margin-right="0" data-padding-x="0" data-padding-y="0" style="font-size: 28px; font-weight: 700; text-align: center; line-height: 1.3; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces;  margin-top: 0px; margin-bottom: 4px; margin-left: 0px; margin-right: 0px; padding-left: 0px; padding-right: 0px; padding-top: 0px; padding-bottom: 0px;">Financial Services Agreementhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh</h1>
+    <p data-block-id="bcc4de73-0fad-44ff-ab99-4753307013cd" data-block-type="paragraph" data-width="100" data-locked="false" data-margin-top="0" data-margin-bottom="16" data-font-size="13" data-font-weight="400" data-align="left" data-line-height="1.6" data-color="" data-margin-left="0" data-margin-right="0" data-padding-x="0" data-padding-y="0" style="font-size: 13px; font-weight: 400; text-align: left; line-height: 1.6; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces;  margin-top: 0px; margin-bottom: 16px; margin-left: 0px; margin-right: 0px; padding-left: 0px; padding-right: 0px; padding-top: 0px; padding-bottom: 0px;">This Agreement (&quot;Agreement&quot;) is entered into as of the date signed below, between the parties identified herein. Please review all terms carefully before kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkksigning.kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk</p>
+    <hr data-block-id="53b43074-762f-4d09-b47b-217f80969880" data-block-type="divider" data-width="100" data-locked="false" data-margin-top="0" data-margin-bottom="20" data-thickness="5" data-style="solid" data-color="#000000" data-margin-left="0" data-margin-right="0" style="border: none; border-top: 5px solid #000000; margin-top: 0px; margin-bottom: 20px; margin-left: 0px; margin-right: 0px;" />
+  </div>
+</div>
+<div data-editor-section="true" data-editor-layout="2" data-section-id="e357df00-8cae-4ed3-a591-9930b1c68319" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-bottom: 24px;">
+  <div data-editor-column="0" style="box-sizing: border-box;">
+    <div data-block-id="84cae39b-6bfa-406b-994e-31eb7a9478b8" data-block-type="text-input" data-width="100" data-locked="false" data-margin-top="0" data-margin-bottom="8" data-label="Full Legal Name" data-field-name="full_name" data-placeholder="Enter your full name" data-required="true" data-validation="none" data-max-length="" data-margin-left="0" data-margin-right="0" style="margin-top: 0px; margin-bottom: 8px; margin-left: 0px; margin-right: 0px;">
+  <label for="full_name" style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px;">Full Legal Name <span style="color: #ef4444;">*</span></label>
+  <input type="text" id="full_name" name="full_name" placeholder="Enter your full name" required style="width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" />
+</div>
+    <div data-block-id="d826aeae-0766-488b-93b1-64cfdfb22c66" data-block-type="text-input" data-width="100" data-locked="false" data-margin-top="0" data-margin-bottom="8" data-label="Email Address" data-field-name="email" data-placeholder="name@example.com" data-required="true" data-validation="email" data-max-length="" data-margin-left="0" data-margin-right="0" style="margin-top: 0px; margin-bottom: 8px; margin-left: 0px; margin-right: 0px;">
+  <label for="email" style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px;">Email Address <span style="color: #ef4444;">*</span></label>
+  <input type="text" id="email" name="email" placeholder="name@example.com" required style="width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" />
+</div>
+  </div>
+  <div data-editor-column="1" style="box-sizing: border-box;">
+    <div data-block-id="4935839b-5ea2-43ad-bcee-d164dade53a1" data-block-type="text-input" data-width="100" data-locked="false" data-margin-top="0" data-margin-bottom="8" data-label="Phone Number" data-field-name="phone" data-placeholder="(555) 000-0000" data-required="true" data-validation="phone" data-max-length="" data-margin-left="0" data-margin-right="0" style="margin-top: 0px; margin-bottom: 8px; margin-left: 0px; margin-right: 0px;">
+  <label for="phone" style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px;">Phone Number <span style="color: #ef4444;">*</span></label>
+  <input type="text" id="phone" name="phone" placeholder="(555) 000-0000" required style="width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" />
+</div>
+    <div data-block-id="1f356103-a8d7-468c-9475-429a7e4ace87" data-block-type="date-picker" data-width="100" data-locked="false" data-margin-top="0" data-margin-bottom="8" data-label="Date of Birth" data-field-name="dob" data-required="true" data-margin-left="0" data-margin-right="0" style="margin-top: 0px; margin-bottom: 8px; margin-left: 0px; margin-right: 0px;">
+  <label for="dob" style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px;">Date of Birth <span style="color: #ef4444;">*</span></label>
+  <input type="date" id="dob" name="dob" required style="width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" />
+</div>
+    <div data-block-id="becfc354-63ef-4911-9204-5db9bd62d5d7" data-block-type="signature" data-width="100" data-locked="false" data-margin-top="0" data-margin-bottom="8" id="signature_1771432898460" data-label="Signature" data-field-name="signature_1771432898460" data-required="false" data-signature-url="" data-margin-left="0" data-margin-right="0" class="signature-area" style="margin-top: 0px; margin-bottom: 8px; margin-left: 0px; margin-right: 0px;">
+  <div class="signature-display" style="display: none;"></div>
+  <span class="sig-label">Signature</span>
+  <button type="button" data-signature-button data-field="signature_1771432898460" class="sign-button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> Sign</button>
+  <input type="hidden" name="signature_1771432898460" value="" data-signature-value />
+</div>
+  </div>
+</div>
+<div data-editor-section="true" data-editor-layout="1" data-section-id="f2c11bf9-edb6-4d31-8d26-ae40fe2cca4c" style="margin-bottom: 24px;">
+  <div data-editor-column="0">
+    <h3 data-block-id="c7dd4a3e-93ac-482d-ab95-65e609acb932" data-block-type="heading" data-width="100" data-locked="false" data-margin-top="8" data-margin-bottom="8" data-level="h3" data-font-size="18" data-font-weight="600" data-align="left" data-line-height="1.3" data-color="" data-margin-left="0" data-margin-right="0" data-padding-x="0" data-padding-y="0" style="font-size: 18px; font-weight: 600; text-align: left; line-height: 1.3; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces;  margin-top: 8px; margin-bottom: 8px; margin-left: 0px; margin-right: 0px; padding-left: 0px; padding-right: 0px; padding-top: 0px; padding-bottom: 0px;">Terms &amp; Conditions</h3>
+    <div data-block-id="90d6d26f-44e3-4aa3-9965-054830c98258" data-block-type="single-checkbox" data-width="100" data-locked="false" data-margin-top="0" data-margin-bottom="8" data-label="I have read and agree to the Terms &amp; Conditions, Privacy Policy, and Disclosure Agreement." data-field-name="terms_agree" data-required="true" data-margin-left="0" data-margin-right="0" style="margin-top: 0px; margin-bottom: 8px; margin-left: 0px; margin-right: 0px;">
+  <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 14px; cursor: pointer; line-height: 1.5;">
+    <input type="checkbox" name="terms_agree" required style="margin-top: 4px; flex-shrink: 0;" />
+    <span>I have read and agree to the Terms &amp; Conditions, Privacy Policy, and Disclosure Agreement.</span>
+  </label>
+</div>
+    <p data-block-id="586e95f3-626e-4f6c-b019-fe8e0764395a" data-block-type="paragraph" data-width="100" data-locked="false" data-margin-top="0" data-margin-bottom="8" data-font-size="12" data-font-weight="400" data-align="left" data-line-height="1.7" data-color="" data-margin-left="0" data-margin-right="0" data-padding-x="0" data-padding-y="0" style="font-size: 12px; font-weight: 400; text-align: left; line-height: 1.7; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces;  margin-top: 0px; margin-bottom: 8px; margin-left: 0px; margin-right: 0px; padding-left: 0px; padding-right: 0px; padding-top: 0px; padding-bottom: 0px;">By executing this Agreement, you acknowledge that you have read, understood, and agree to be bound by the terms and conditions set forth herein. This Agreement constitutes the entire understanding between the parties with respect to the subject matter contained herein and supersedes all prior negotiations, representations, or agreements relating thereto.</p>
+    <div data-block-id="4e82d3d5-759f-460b-937b-ea4bb56a4bf5" data-block-type="signature" data-width="100" data-locked="false" data-margin-top="0" data-margin-bottom="8" id="applicant_signature" data-label="Applicant Signature" data-field-name="applicant_signature" data-required="true" data-signature-url="" data-margin-left="0" data-margin-right="0" class="signature-area" style="margin-top: 0px; margin-bottom: 8px; margin-left: 0px; margin-right: 0px;">
+  <div class="signature-display" style="display: none;"></div>
+  <span class="sig-label">Applicant Signature <span style="color:#ef4444;">*</span></span>
+  <button type="button" data-signature-button data-field="applicant_signature" class="sign-button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> Sign</button>
+  <input type="hidden" name="applicant_signature" value="" data-signature-value />
+</div>
+  </div>
+</div>
+<div data-editor-section="true" data-editor-layout="3" data-section-id="f6f56994-10fb-430f-bd5f-8b57335c8e7d" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 24px;">
+  <div data-editor-column="0" style="box-sizing: border-box;">
+    <h2 data-block-id="a3698810-9b4a-42fe-9ee2-13a50c06004f" data-block-type="heading" data-width="100" data-locked="false" data-margin-top="0" data-margin-bottom="12" data-level="h2" data-font-size="24" data-font-weight="600" data-align="left" data-line-height="1.3" data-color="" data-margin-left="0" data-margin-right="0" data-padding-x="0" data-padding-y="0" style="font-size: 24px; font-weight: 600; text-align: left; line-height: 1.3; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces;  margin-top: 0px; margin-bottom: 12px; margin-left: 0px; margin-right: 0px; padding-left: 0px; padding-right: 0px; padding-top: 0px; padding-bottom: 0px;">Heading Textdvfbgthhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh</h2>
+    <hr data-block-id="d2fb82f8-23f1-45ec-9e4d-c36e5a93b252" data-block-type="divider" data-width="100" data-locked="false" data-margin-top="16" data-margin-bottom="16" data-thickness="1" data-style="solid" data-color="#000000" data-margin-left="0" data-margin-right="0" style="border: none; border-top: 1px solid #000000; margin-top: 16px; margin-bottom: 16px; margin-left: 0px; margin-right: 0px;" />
+    <button data-block-id="8487512a-14f2-43ed-932b-cfb50b34b27e" data-block-type="button" data-width="100" data-locked="false" data-margin-top="0" data-margin-bottom="8" id="form-submit" data-label="Submit" data-button-type="submit" data-variant="primary" data-margin-left="0" data-margin-right="0" type="submit" style="padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; background-color: #3b82f6; color: white; border: none; margin-top: 0px; margin-bottom: 8px; margin-left: 0px; margin-right: 0px;">Submit</button>
+  </div>
+  <div data-editor-column="1" style="box-sizing: border-box;">
+    <h2 data-block-id="8ca870ad-a581-4fd0-a81e-7c989096ceb9" data-block-type="heading" data-width="100" data-locked="false" data-margin-top="0" data-margin-bottom="12" data-level="h2" data-font-size="24" data-font-weight="600" data-align="left" data-line-height="1.3" data-color="" data-margin-left="0" data-margin-right="0" data-padding-x="0" data-padding-y="0" style="font-size: 24px; font-weight: 600; text-align: left; line-height: 1.3; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces;  margin-top: 0px; margin-bottom: 12px; margin-left: 0px; margin-right: 0px; padding-left: 0px; padding-right: 0px; padding-top: 0px; padding-bottom: 0px;">Heading Texthhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh</h2>
+    <hr data-block-id="8499e81b-e9d4-494e-bb18-1e124c81a798" data-block-type="divider" data-width="100" data-locked="false" data-margin-top="16" data-margin-bottom="16" data-thickness="1" data-style="solid" data-color="#000000" data-margin-left="0" data-margin-right="0" style="border: none; border-top: 1px solid #000000; margin-top: 16px; margin-bottom: 16px; margin-left: 0px; margin-right: 0px;" />
+    <div data-block-id="d4e321fa-ac75-4869-bdda-c28ee00bb477" data-block-type="signature" data-width="100" data-locked="false" data-margin-top="0" data-margin-bottom="8" id="signature_1771510655085" data-label="Signature" data-field-name="signature_1771510655085" data-required="false" data-signature-url="" data-margin-left="0" data-margin-right="0" class="signature-area" style="margin-top: 0px; margin-bottom: 8px; margin-left: 0px; margin-right: 0px;">
+  <div class="signature-display" style="display: none;"></div>
+  <span class="sig-label">Signature</span>
+  <button type="button" data-signature-button data-field="signature_1771510655085" class="sign-button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> Sign</button>
+  <input type="hidden" name="signature_1771510655085" value="" data-signature-value />
+</div>
+  </div>
+  <div data-editor-column="2" style="box-sizing: border-box;">
+    <h2 data-block-id="476dfbe9-51cc-4e70-9d26-c7509a5026de" data-block-type="heading" data-width="100" data-locked="false" data-margin-top="0" data-margin-bottom="12" data-level="h2" data-font-size="24" data-font-weight="600" data-align="left" data-line-height="1.3" data-color="" data-margin-left="0" data-margin-right="0" data-padding-x="0" data-padding-y="0" style="font-size: 24px; font-weight: 600; text-align: left; line-height: 1.3; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces;  margin-top: 0px; margin-bottom: 12px; margin-left: 0px; margin-right: 0px; padding-left: 0px; padding-right: 0px; padding-top: 0px; padding-bottom: 0px;">HeadinggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggText</h2>
+    <hr data-block-id="58218e1f-39a5-43d6-806c-8214fea6ade6" data-block-type="divider" data-width="100" data-locked="false" data-margin-top="16" data-margin-bottom="16" data-thickness="1" data-style="solid" data-color="#000000" data-margin-left="0" data-margin-right="0" style="border: none; border-top: 1px solid #000000; margin-top: 16px; margin-bottom: 16px; margin-left: 0px; margin-right: 0px;" />
+    <div data-block-id="fadaa299-8deb-43f5-9489-2f2e761855e4" data-block-type="signature" data-width="100" data-locked="false" data-margin-top="0" data-margin-bottom="8" id="signature_1771510658469" data-label="Signature" data-field-name="signature_1771510658469" data-required="false" data-signature-url="" data-margin-left="0" data-margin-right="0" class="signature-area" style="margin-top: 0px; margin-bottom: 8px; margin-left: 0px; margin-right: 0px;">
+  <div class="signature-display" style="display: none;"></div>
+  <span class="sig-label">Signature</span>
+  <button type="button" data-signature-button data-field="signature_1771510658469" class="sign-button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> Sign</button>
+  <input type="hidden" name="signature_1771510658469" value="" data-signature-value />
+</div>
+  </div>
+</div>
+  </form>
+
+  <div id="esign-overlay" class="esign-overlay">
+    <div id="esign-review-modal" class="esign-modal" style="display:none;">
+      <div class="esign-modal-header">Please review these documents carefully</div>
+      <div class="esign-modal-body">
+        <p style="font-size: 14px; color: #475569; margin-bottom: 20px;">Please sign the documents electronically after your review.</p>
+        <label class="esign-checkbox-label">
+          <input type="checkbox" id="esign-agree-checkbox" />
+          <span>I agree to use Electronic Signature on this website.</span>
+        </label>
+      </div>
+      <div class="esign-modal-footer">
+        <button type="button" id="esign-continue-btn" class="esign-btn esign-btn-primary" disabled>Continue</button>
+        <button type="button" data-esign-cancel class="esign-btn esign-btn-danger">Cancel</button>
+      </div>
+    </div>
+    <div id="esign-adopt-modal" class="esign-modal" style="display:none;">
+      <div class="esign-modal-header">Adopt your signature</div>
+      <div class="esign-modal-body">
+        <p style="font-size: 14px; color: #475569;">Borrower's Name: <strong id="esign-borrower-name">Mafrook Doe</strong></p>
+        <div style="margin-top: 12px; font-size: 14px; color: #475569;">Adopted Signature:</div>
+        <div id="esign-adopted-sig" class="esign-sig-preview">Mafrook Doe</div>
+        <p class="esign-legal">By clicking adopt and sign, I agree that the signature will be the electronic representation of my signature for all purposes when I (or my agent) use them on documents, including legally binding contracts &mdash; just the same as a pen-and-paper signature and initials. Further I have previously consented to the use of e-signatures and electronic communications.</p>
+      </div>
+      <div class="esign-modal-footer">
+        <button type="button" id="esign-adopt-btn" class="esign-btn esign-btn-primary">Adopt and Sign</button>
+        <button type="button" data-esign-cancel class="esign-btn esign-btn-danger">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function() {
+  document.addEventListener('DOMContentLoaded', function() {
+    var form = document.querySelector('form');
+    if (!form) return;
+
+    // --- E-Sign Modal Flow ---
+    var overlay = document.getElementById('esign-overlay');
+    var reviewModal = document.getElementById('esign-review-modal');
+    var adoptModal = document.getElementById('esign-adopt-modal');
+    var agreeCheckbox = document.getElementById('esign-agree-checkbox');
+    var continueBtn = document.getElementById('esign-continue-btn');
+    var adoptBtn = document.getElementById('esign-adopt-btn');
+    var cancelBtns = document.querySelectorAll('[data-esign-cancel]');
+    var adoptedSigPreview = document.getElementById('esign-adopted-sig');
+    var borrowerNameEl = document.getElementById('esign-borrower-name');
+    var activeSignatureField = null;
+
+    function getSignerName() {
+      var firstEl = form.querySelector('[name*="irst"]') || form.querySelector('[name*="first"]');
+      var lastEl = form.querySelector('[name*="ast"]') || form.querySelector('[name*="last"]');
+      var firstName = (firstEl && firstEl.value) ? firstEl.value.trim() : 'Mafrook';
+      var lastName = (lastEl && lastEl.value) ? lastEl.value.trim() : 'Doe';
+      var fullNameEl = form.querySelector('[name*="full_name"]') || form.querySelector('[name*="name"]');
+      if ((!firstEl || !firstEl.value) && fullNameEl && fullNameEl.value) {
+        var parts = fullNameEl.value.trim().split(' ');
+        firstName = parts[0] || 'Mafrook';
+        lastName = parts.slice(1).join(' ') || 'Doe';
+      }
+      return { first: firstName, last: lastName, full: firstName + ' ' + lastName };
+    }
+
+    function openOverlay() { if (overlay) overlay.style.display = 'flex'; }
+    function closeOverlay() {
+      if (overlay) overlay.style.display = 'none';
+      if (reviewModal) reviewModal.style.display = 'none';
+      if (adoptModal) adoptModal.style.display = 'none';
+      if (agreeCheckbox) agreeCheckbox.checked = false;
+      if (continueBtn) continueBtn.disabled = true;
+    }
+
+    var signButtons = document.querySelectorAll('[data-signature-button]');
+    signButtons.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        activeSignatureField = btn.getAttribute('data-field');
+        if (reviewModal) reviewModal.style.display = 'block';
+        openOverlay();
+      });
+    });
+
+    if (agreeCheckbox && continueBtn) {
+      agreeCheckbox.addEventListener('change', function() {
+        continueBtn.disabled = !agreeCheckbox.checked;
+      });
+    }
+
+    if (continueBtn) {
+      continueBtn.addEventListener('click', function() {
+        if (!agreeCheckbox || !agreeCheckbox.checked) return;
+        if (reviewModal) reviewModal.style.display = 'none';
+        var signer = getSignerName();
+        if (borrowerNameEl) borrowerNameEl.textContent = signer.full;
+        if (adoptedSigPreview) adoptedSigPreview.textContent = signer.full;
+        if (adoptModal) adoptModal.style.display = 'block';
+      });
+    }
+
+    if (adoptBtn) {
+      adoptBtn.addEventListener('click', function() {
+        var signer = getSignerName();
+        if (activeSignatureField) {
+          var area = document.getElementById(activeSignatureField);
+          if (area) {
+            var display = area.querySelector('.signature-display');
+            var btn = area.querySelector('.sign-button');
+            var hidden = area.querySelector('[data-signature-value]');
+            if (display) {
+              var ts = new Date();
+              display.innerHTML = '<span style="font-family: Allura, cursive; font-size: 26px; color: #0f172a;">' + signer.full + '</span><span style="font-size: 11px; color: #94a3b8; margin-left: 12px;">' + ts.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) + '</span>';
+              display.style.display = 'flex';
+              display.style.alignItems = 'baseline';
+              display.style.gap = '8px';
+              display.style.borderBottom = '1px solid #e2e8f0';
+              display.style.paddingBottom = '4px';
+              display.style.flex = '1';
+            }
+            if (btn) btn.style.display = 'none';
+            if (hidden) hidden.value = signer.full;
+            area.style.borderColor = '#e2e8f0';
+          }
+        }
+        closeOverlay();
+      });
+    }
+
+    cancelBtns.forEach(function(btn) {
+      btn.addEventListener('click', closeOverlay);
+    });
+
+    if (overlay) {
+      overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) closeOverlay();
+      });
+    }
+
+    // --- Inline Validation Helpers ---
+    function getFieldLabel(field) {
+      var wrapper = field.closest('[data-block-type]');
+      if (wrapper) {
+        var label = wrapper.querySelector('label');
+        if (label) {
+          var clone = label.cloneNode(true);
+          var span = clone.querySelector('span');
+          if (span) clone.removeChild(span);
+          var txt = clone.textContent.trim();
+          if (txt) return txt;
+        }
+        var legend = wrapper.querySelector('legend');
+        if (legend) {
+          var lClone = legend.cloneNode(true);
+          var lSpan = lClone.querySelector('span');
+          if (lSpan) lClone.removeChild(lSpan);
+          var lTxt = lClone.textContent.trim();
+          if (lTxt) return lTxt;
+        }
+      }
+      return field.name || 'This field';
+    }
+
+    function showFieldError(field, msg) {
+      clearFieldError(field);
+      field.style.borderColor = '#ef4444';
+      field.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.1)';
+      field.classList.add('field-invalid');
+      var el = document.createElement('div');
+      el.className = 'field-error-msg';
+      el.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> ' + msg;
+      var target = field.closest('[data-block-type]') || field.parentElement;
+      target.appendChild(el);
+    }
+
+    function clearFieldError(field) {
+      field.style.borderColor = '';
+      field.style.boxShadow = '';
+      field.classList.remove('field-invalid');
+      var wrapper = field.closest('[data-block-type]') || field.parentElement;
+      var existing = wrapper.querySelectorAll('.field-error-msg');
+      existing.forEach(function(e) { e.remove(); });
+    }
+
+    // Live clear on input
+    form.addEventListener('input', function(e) { clearFieldError(e.target); });
+    form.addEventListener('change', function(e) { clearFieldError(e.target); });
+
+    // --- Form Validation & Submit Logging ---
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      // Clear all previous errors
+      form.querySelectorAll('.field-error-msg').forEach(function(el) { el.remove(); });
+      form.querySelectorAll('.field-invalid').forEach(function(el) {
+        el.style.borderColor = ''; el.style.boxShadow = ''; el.classList.remove('field-invalid');
+      });
+
+      var requiredFields = form.querySelectorAll('[required]');
+      var firstInvalid = null;
+      var errorCount = 0;
+
+      requiredFields.forEach(function(field) {
+        var isValid = true;
+        var label = getFieldLabel(field);
+
+        if (field.type === 'checkbox') {
+          isValid = field.checked;
+        } else if (field.type === 'radio') {
+          var radios = form.querySelectorAll('input[name="' + field.name + '"]');
+          isValid = Array.from(radios).some(function(r) { return r.checked; });
+          if (!isValid) {
+            showFieldError(radios[0], '"' + label + '" — please select an option');
+            if (!firstInvalid) firstInvalid = radios[0];
+            errorCount++;
+            return;
+          }
+          return;
+        } else if (field.tagName === 'SELECT') {
+          isValid = field.value !== '';
+        } else {
+          isValid = field.value.trim() !== '';
+        }
+
+        if (!isValid) {
+          var msg = field.type === 'checkbox'
+            ? '"' + label + '" — you must agree to continue'
+            : '"' + label + '" is required';
+          showFieldError(field, msg);
+          if (!firstInvalid) firstInvalid = field;
+          errorCount++;
+        }
+      });
+
+      // Validate required signatures
+      var sigAreas = form.querySelectorAll('.signature-area[data-required="true"]');
+      sigAreas.forEach(function(area) {
+        var hidden = area.querySelector('[data-signature-value]');
+        if (!hidden || !hidden.value) {
+          var sigLabel = area.getAttribute('data-label') || 'Signature';
+          area.style.borderColor = '#ef4444';
+          area.style.borderStyle = 'dashed';
+          area.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.1)';
+          var existing = area.querySelector('.field-error-msg');
+          if (!existing) {
+            var el = document.createElement('div');
+            el.className = 'field-error-msg';
+            el.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> "' + sigLabel + '" — signature is required';
+            area.appendChild(el);
+          }
+          if (!firstInvalid) firstInvalid = area;
+          errorCount++;
+        }
+      });
+
+      if (firstInvalid) {
+        firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (firstInvalid.focus) firstInvalid.focus();
+        return;
+      }
+
+      var formData = {};
+      var inputs = form.querySelectorAll('input, select, textarea');
+      inputs.forEach(function(el) {
+        var name = el.name;
+        if (!name) return;
+        if (el.type === 'radio') {
+          if (el.checked) formData[name] = el.value;
+        } else if (el.type === 'checkbox') {
+          if (el.name in formData) {
+            if (!Array.isArray(formData[name])) formData[name] = [formData[name]];
+            if (el.checked) formData[name].push(el.value || true);
+          } else {
+            formData[name] = el.checked ? (el.value || true) : false;
+          }
+        } else {
+          formData[name] = el.value;
+        }
+      });
+
+      console.group('%c Form Submission Data', 'color: #1e3a5f; font-size: 14px; font-weight: bold;');
+      console.log('%c Timestamp:', 'font-weight: bold;', new Date().toISOString());
+      Object.keys(formData).forEach(function(key) {
+        console.log('%c ' + key + ':', 'color: #2563eb; font-weight: 600;', formData[key]);
+      });
+      console.groupEnd();
+      console.log('%c Complete form data object:', 'color: #16a34a; font-weight: bold;', formData);
+
+      alert('Form submitted successfully! Check the browser console (F12) for all captured values.');
+    });
+  });
+})();
+</script>
+</body>
+</html>

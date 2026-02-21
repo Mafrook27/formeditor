@@ -3,6 +3,42 @@ import { useEditor } from '../EditorContext';
 import { PlaceholderDropdown, usePlaceholderTrigger, insertPlaceholderIntoText } from '../plugins/PlaceholderPlugin';
 import { containsPlaceholders } from '../parser/MarkParser';
 import type { ParagraphBlockProps } from '../editorConfig';
+import styles from '../editor.module.css';
+
+function extractText(el: HTMLElement): string {
+  return (el.innerText || '').replace(/\u00a0/g, ' ');
+}
+
+const ParagraphContent = memo(function ParagraphContent({ content, isPreview }: { content: string; isPreview: boolean }) {
+  if (!content) return isPreview ? null : <span className="text-muted-foreground/50">Click to add text...</span>;
+
+  if (containsPlaceholders(content)) {
+    const parts = content.split(/(PH@[\w]+|@[\w]+)/g);
+    let charOffset = 0;
+    return (
+      <>
+        {parts.map((part) => {
+          const key = `${charOffset}`;
+          charOffset += part.length || 1;
+          if (part.match(/^(PH@[\w]+|@[\w]+)$/)) {
+            return (
+              <span
+                key={key}
+                className="bg-primary/10 text-primary font-medium px-1 rounded"
+                style={{ backgroundColor: '#b3d4fc', color: '#000', padding: '0 2px' }}
+              >
+                {part}
+              </span>
+            );
+          }
+          return <React.Fragment key={key}>{part}</React.Fragment>;
+        })}
+      </>
+    );
+  }
+
+  return <>{content}</>;
+});
 
 export const ParagraphBlock = memo(function ParagraphBlock({ block }: { block: ParagraphBlockProps }) {
   const { state, updateBlockWithHistory } = useEditor();
@@ -10,43 +46,25 @@ export const ParagraphBlock = memo(function ParagraphBlock({ block }: { block: P
   const [isEditing, setIsEditing] = useState(false);
   const editRef = useRef<HTMLDivElement>(null);
   const isSelectingPlaceholderRef = useRef(false);
-  
+
   const handlePlaceholderInsert = useCallback((placeholder: string, position: number) => {
     if (!editRef.current) return;
-    
     isSelectingPlaceholderRef.current = true;
-    
-    const currentText = editRef.current.textContent || '';
+    const currentText = extractText(editRef.current);
     const newContent = insertPlaceholderIntoText(currentText, placeholder, position);
     
-    // Update the block content
+    // Update state first
     updateBlockWithHistory(block.id, { content: newContent });
     
-    // Set cursor position after the inserted placeholder
+    // Then handle cursor position after React updates
     setTimeout(() => {
       if (editRef.current) {
         editRef.current.focus();
-        const selection = window.getSelection();
-        const range = document.createRange();
-        
-        // Calculate new cursor position (after placeholder + space)
-        const newCursorPos = position + placeholder.length + 1;
-        
-        // Find the text node and set cursor
-        const textNode = editRef.current.firstChild;
-        if (textNode && textNode.nodeType === Node.TEXT_NODE) {
-          const safePos = Math.min(newCursorPos, textNode.textContent?.length || 0);
-          range.setStart(textNode, safePos);
-          range.collapse(true);
-          selection?.removeAllRanges();
-          selection?.addRange(range);
-        }
-        
         isSelectingPlaceholderRef.current = false;
       }
-    }, 0);
+    }, 50); // Increased delay to let React finish updating
   }, [block.id, updateBlockWithHistory]);
-  
+
   const placeholderTrigger = usePlaceholderTrigger({
     onInsert: handlePlaceholderInsert,
   });
@@ -63,39 +81,10 @@ export const ParagraphBlock = memo(function ParagraphBlock({ block }: { block: P
     color: block.color || 'inherit',
     outline: 'none',
     cursor: isPreview ? 'default' : 'text',
-    whiteSpace: 'pre-wrap',
-    wordBreak: 'break-word',
-  };
-  
-  // Render content with placeholder highlighting
-  const renderContent = () => {
-    const content = block.content;
-    if (!content) return isPreview ? '' : <span className="text-muted-foreground/50">Click to add text...</span>;
-    
-    // Check for placeholders and highlight them (both @Name and PH@Name formats)
-    if (containsPlaceholders(content)) {
-      const parts = content.split(/(PH@[\w]+|@[\w]+)/g);
-      return parts.map((part, idx) => {
-        if (part.match(/^(PH@[\w]+|@[\w]+)$/)) {
-          return (
-            <span 
-              key={idx} 
-              className="bg-primary/10 text-primary font-medium px-1 rounded"
-              style={{ backgroundColor: '#b3d4fc', color: '#000', padding: '0 2px' }}
-            >
-              {part}
-            </span>
-          );
-        }
-        return part;
-      });
-    }
-    
-    return content;
   };
 
   if (isPreview) {
-    return <p style={paraStyle}>{renderContent()}</p>;
+    return <p className={styles.canvasBlock} style={paraStyle}><ParagraphContent content={block.content} isPreview={isPreview} /></p>;
   }
 
   return (
@@ -105,30 +94,33 @@ export const ParagraphBlock = memo(function ParagraphBlock({ block }: { block: P
         contentEditable={isEditing}
         suppressContentEditableWarning
         style={paraStyle}
-        className="min-h-[1.5em]"
+        className={`min-h-[1.5em] ${styles.canvasBlock}`}
+        role="textbox"
+        tabIndex={0}
         onDoubleClick={() => !block.locked && setIsEditing(true)}
         onBlur={(e) => {
-          // Don't blur if we're selecting a placeholder
-          if (isSelectingPlaceholderRef.current) {
-            return;
-          }
-          
+          if (isSelectingPlaceholderRef.current) return;
           setIsEditing(false);
           placeholderTrigger.close();
-          const newContent = e.currentTarget.textContent || '';
+          const newContent = extractText(e.currentTarget);
           if (newContent !== block.content) {
             updateBlockWithHistory(block.id, { content: newContent });
           }
         }}
         onKeyDown={(e) => {
+          if (e.key === 'Enter') { 
+            e.preventDefault(); 
+            e.currentTarget.blur(); 
+          }
+          // Don't prevent space key - let it work naturally
           if (editRef.current) {
             placeholderTrigger.handleKeyDown(e as any, editRef.current);
           }
         }}
       >
-        {renderContent()}
+        <ParagraphContent content={block.content} isPreview={isPreview} />
       </div>
-      
+
       <PlaceholderDropdown
         isOpen={placeholderTrigger.isOpen}
         onClose={placeholderTrigger.close}

@@ -2,6 +2,7 @@ import React from 'react';
 import { BLOCK_TYPES, type EditorBlock } from '../editorConfig';
 import { HeadingBlock } from './HeadingBlock';
 import { ParagraphBlock } from './ParagraphBlock';
+import { HyperlinkBlock } from './HyperlinkBlock';
 import { DividerBlock } from './DividerBlock';
 import { ImageBlock } from './ImageBlock';
 import { TextInputBlock } from './TextInputBlock';
@@ -11,7 +12,6 @@ import { RadioGroupBlock } from './RadioGroupBlock';
 import { CheckboxGroupBlock } from './CheckboxGroupBlock';
 import { SingleCheckboxBlock } from './SingleCheckboxBlock';
 import { DatePickerBlock } from './DatePickerBlock';
-import { FileUploadBlock } from './FileUploadBlock';
 import { SignatureBlock } from './SignatureBlock';
 import { TableBlock } from './TableBlock';
 import { ListBlock } from './ListBlock';
@@ -28,6 +28,8 @@ export function BlockRenderer({ block }: BlockRendererProps) {
       return <HeadingBlock block={block} />;
     case BLOCK_TYPES.PARAGRAPH:
       return <ParagraphBlock block={block} />;
+    case BLOCK_TYPES.HYPERLINK:
+      return <HyperlinkBlock block={block} />;
     case BLOCK_TYPES.DIVIDER:
       return <DividerBlock block={block} />;
     case BLOCK_TYPES.IMAGE:
@@ -46,8 +48,6 @@ export function BlockRenderer({ block }: BlockRendererProps) {
       return <SingleCheckboxBlock block={block} />;
     case BLOCK_TYPES.DATE_PICKER:
       return <DatePickerBlock block={block} />;
-    case BLOCK_TYPES.FILE_UPLOAD:
-      return <FileUploadBlock block={block} />;
     case BLOCK_TYPES.SIGNATURE:
       return <SignatureBlock block={block} />;
     case BLOCK_TYPES.TABLE:

@@ -1,0 +1,22 @@
+.canvasBlock {
+  white-space: break-spaces;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.canvasBlock [contenteditable] {
+  white-space: break-spaces;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  caret-color: currentColor;
+}
+
+.canvasBlock [contenteditable]:focus {
+  outline: none;
+}
+
+.canvasCell {
+  white-space: break-spaces;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}

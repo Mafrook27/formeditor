@@ -28,9 +28,10 @@ export const BlockWrapper = memo(function BlockWrapper({ block, sectionId, colum
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.4 : 1,
+    transition: isDragging ? 'none' : transition,
+    opacity: isDragging ? 0.3 : 1,
     width: `${block.width}%`,
+    minWidth: 0, // Critical: allows flex/grid children to shrink below content size
     marginTop: `${block.marginTop || 0}px`,
     marginBottom: `${block.marginBottom || 0}px`,
     marginLeft: `${block.marginLeft || 0}px`,
@@ -39,12 +40,14 @@ export const BlockWrapper = memo(function BlockWrapper({ block, sectionId, colum
     paddingRight: `${block.paddingX || 0}px`,
     paddingTop: `${block.paddingY || 0}px`,
     paddingBottom: `${block.paddingY || 0}px`,
+    cursor: isDragging ? 'grabbing' : 'default',
   };
 
   if (isPreview) {
     return (
       <div style={{
         width: `${block.width}%`,
+        minWidth: 0, // Critical: allows flex/grid children to shrink
         marginTop: `${block.marginTop || 0}px`,
         marginBottom: `${block.marginBottom || 0}px`,
         marginLeft: `${block.marginLeft || 0}px`,
@@ -63,12 +66,30 @@ export const BlockWrapper = memo(function BlockWrapper({ block, sectionId, colum
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative rounded-sm ${
-        isSelected ? 'block-selected' : isHovered ? 'block-hover' : ''
+      className={`group relative rounded-sm border-2 ${
+        isSelected 
+          ? 'block-selected border-primary' 
+          : isHovered 
+            ? 'block-hover border-primary/30' 
+            : 'border-dashed border-gray-300/40'
       } ${isDragging ? 'z-50' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      role="button"
+      tabIndex={0}
       onClick={(e) => { e.stopPropagation(); selectBlock(block.id); }}
+      onKeyDown={(e) => { 
+        // Don't prevent space/enter if user is editing inside the block
+        const target = e.target as HTMLElement;
+        if (target !== e.currentTarget && (target.isContentEditable || target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+          return; // Let the editable element handle the key
+        }
+        if (e.key === 'Enter' || e.key === ' ') { 
+          e.preventDefault(); 
+          e.stopPropagation(); 
+          selectBlock(block.id); 
+        } 
+      }}
     >
       {/* Drag handle */}
       {(isHovered || isSelected) && !block.locked && (

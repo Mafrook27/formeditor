@@ -8,12 +8,12 @@ import { Columns2, Columns3, LayoutGrid } from 'lucide-react';
 import {
   Heading, AlignLeft, Minus, Image, TextCursorInput, FileText,
   ChevronDown, CircleDot, CheckSquare, Square, Calendar, Upload, PenTool,
-  Table2, List, MousePointerClick,
+  Table2, List, MousePointerClick, Link,
   type LucideIcon
 } from 'lucide-react';
 
 const iconMap: Record<string, LucideIcon> = {
-  Heading, AlignLeft, Minus, Image, TextCursorInput, FileText,
+  Heading, AlignLeft, Link, Minus, Image, TextCursorInput, FileText,
   ChevronDown, CircleDot, CheckSquare, Square, Calendar, Upload, PenTool,
   Table2, List, MousePointerClick
 };

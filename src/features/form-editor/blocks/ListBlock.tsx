@@ -1,36 +1,57 @@
-import React, { memo, useState, useRef, useEffect } from 'react';
+import React, { memo, useState, useRef, useEffect, useCallback } from 'react';
 import { useEditor } from '../EditorContext';
 import { Button } from '@/components/ui/button';
 import { Plus, X, GripVertical } from 'lucide-react';
 import type { ListBlockProps } from '../editorConfig';
+import editorStyles from '../editor.module.css';
 
 export const ListBlock = memo(function ListBlock({ block }: { block: ListBlockProps }) {
   const { state, updateBlockWithHistory } = useEditor();
   const isPreview = state.isPreviewMode;
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const nextKeyId = useRef(0);
+  const itemKeysRef = useRef<string[]>([]);
   
-  useEffect(() => {
-    if (editingIndex !== null && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
+  // Safety check: ensure items exists
+  const items = block.items || ['Item 1', 'Item 2'];
+
+  while (itemKeysRef.current.length < items.length) {
+    itemKeysRef.current.push(String(nextKeyId.current++));
+  }
+  itemKeysRef.current.length = items.length;
+  
+  // Auto-resize textarea to fit content
+  const autoResizeTextarea = useCallback((textarea: HTMLTextAreaElement | null) => {
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = textarea.scrollHeight + 'px';
     }
-  }, [editingIndex]);
+  }, []);
+
+  useEffect(() => {
+    if (editingIndex !== null && textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.select();
+      autoResizeTextarea(textareaRef.current);
+    }
+  }, [editingIndex, autoResizeTextarea]);
   
   const updateItem = (idx: number, value: string) => {
-    const newItems = block.items.map((item, i) => (i === idx ? value : item));
+    const newItems = items.map((item, i) => (i === idx ? value : item));
     updateBlockWithHistory(block.id, { items: newItems });
   };
   
   const addItem = () => {
-    updateBlockWithHistory(block.id, { items: [...block.items, ''] });
-    setEditingIndex(block.items.length);
+    updateBlockWithHistory(block.id, { items: [...items, ''] });
+    setEditingIndex(items.length);
   };
   
   const removeItem = (idx: number) => {
-    if (block.items.length <= 1) return;
-    const newItems = block.items.filter((_, i) => i !== idx);
+    if (items.length <= 1) return;
+    const newItems = items.filter((_, i) => i !== idx);
     updateBlockWithHistory(block.id, { items: newItems });
+    itemKeysRef.current.splice(idx, 1);
     if (editingIndex === idx) setEditingIndex(null);
   };
   
@@ -51,52 +72,76 @@ export const ListBlock = memo(function ListBlock({ block }: { block: ListBlockPr
   };
   
   const handleKeyDown = (e: React.KeyboardEvent, idx: number) => {
-    if (e.key === 'Enter') {
+    // Allow Enter for new lines, use Ctrl+Enter to create new item
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       addItem();
-    } else if (e.key === 'Backspace' && block.items[idx] === '' && block.items.length > 1) {
+    } else if (e.key === 'Backspace' && items[idx] === '' && items.length > 1) {
       e.preventDefault();
       removeItem(idx);
-      if (idx > 0) setEditingIndex(idx - 1);
+      if (idx > 0) setEditingIndex(() => idx - 1);
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
-      if (idx < block.items.length - 1) setEditingIndex(idx + 1);
+      if (idx < items.length - 1) setEditingIndex(() => idx + 1);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      if (idx > 0) setEditingIndex(idx - 1);
+      if (idx > 0) setEditingIndex(() => idx - 1);
     }
   };
   
   const ListTag = block.listType === 'ordered' ? 'ol' : 'ul';
+  const isEditable = !isPreview && !block.locked;
   
   return (
-    <div className="space-y-2">
-      <ListTag className={`${block.listType === 'ordered' ? 'list-decimal' : 'list-disc'} ml-5 space-y-1`}>
-        {block.items.map((item, idx) => (
-          <li key={idx} className="text-sm">
+    <div className="space-y-2" style={{ minWidth: 0 }}>
+      <ListTag 
+        className={`${block.listType === 'ordered' ? 'list-decimal' : 'list-disc'} ml-5 space-y-1`}
+        style={{ minWidth: 0 }}
+      >
+        {items.map((item, idx) => (
+          <li 
+            key={itemKeysRef.current[idx]} 
+            className={`text-sm ${editorStyles.canvasCell}`}
+            style={{ minWidth: 0 }}
+          >
             {editingIndex === idx ? (
-              <input
-                ref={inputRef}
-                type="text"
+              <textarea
+                ref={textareaRef}
                 value={item}
-                onChange={(e) => updateItem(idx, e.target.value)}
+                onChange={(e) => {
+                  updateItem(idx, e.target.value);
+                  autoResizeTextarea(e.target);
+                }}
                 onBlur={handleBlur}
                 onKeyDown={(e) => handleKeyDown(e, idx)}
-                className="w-full bg-transparent border-0 outline-none ring-0 focus:ring-2 focus:ring-primary rounded px-1 -mx-1"
+                className="w-full bg-transparent border-0 outline-none ring-0 focus:ring-2 focus:ring-primary rounded px-1 -mx-1 resize-none"
+                style={{
+                  wordBreak: 'break-word',
+                  overflowWrap: 'break-word',
+                  minHeight: '1.5rem',
+                  overflow: 'hidden'
+                }}
               />
-            ) : (
-              <span 
-                className={`${!isPreview && !block.locked ? 'cursor-text hover:bg-primary/5 px-1 -mx-1 rounded block' : ''}`}
+            ) : isEditable ? (
+              <span
+                className={`cursor-text hover:bg-primary/5 px-1 -mx-1 rounded block ${editorStyles.canvasCell}`}
                 onClick={() => handleItemClick(idx)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleItemClick(idx); } }}
               >
-                {item || (isPreview ? '' : <span className="text-muted-foreground/50">Click to edit</span>)}
+                {item || <span className="text-muted-foreground/50">Click to edit</span>}
+              </span>
+            ) : (
+              <span className={editorStyles.canvasCell}>
+                {item || ''}
               </span>
             )}
           </li>
         ))}
       </ListTag>
       
-      {!isPreview && !block.locked && (
+      {isEditable && (
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={addItem}>
             <Plus className="h-3 w-3" /> Item
@@ -104,12 +149,12 @@ export const ListBlock = memo(function ListBlock({ block }: { block: ListBlockPr
           <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={toggleListType}>
             {block.listType === 'ordered' ? 'Numbered' : 'Bulleted'}
           </Button>
-          {block.items.length > 1 && (
+          {items.length > 1 && (
             <Button
               variant="ghost"
               size="sm"
               className="h-7 text-xs text-destructive hover:text-destructive"
-              onClick={() => removeItem(block.items.length - 1)}
+              onClick={() => removeItem(items.length - 1)}
             >
               <X className="h-3 w-3" /> Remove Last
             </Button>

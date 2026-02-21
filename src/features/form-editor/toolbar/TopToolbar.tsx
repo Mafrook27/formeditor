@@ -18,28 +18,64 @@ export function TopToolbar() {
   const [showImportDialog, setShowImportDialog] = useState(false);
 
   const handleExport = useCallback(() => {
-    const html = exportToHTML(state.sections);
-    const blob = new Blob([html], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'agreement-form.html';
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success('HTML exported successfully!');
+    try {
+      const html = exportToHTML(state.sections);
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `agreement-form-${Date.now()}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      // Show success toast
+      toast.success('Export Successful', {
+        description: 'Your form has been downloaded as an HTML file.',
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error('Export Failed', {
+        description: 'There was an error exporting your form. Please try again.',
+        duration: 4000,
+      });
+    }
   }, [state.sections]);
 
   const handlePreviewInTab = useCallback(() => {
-    const html = exportToHTML(state.sections);
-    const blob = new Blob([html], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank');
+    try {
+      const html = exportToHTML(state.sections);
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      
+      toast.success('Preview Opened', {
+        description: 'Your form preview has been opened in a new tab.',
+        duration: 2000,
+      });
+    } catch (error) {
+      console.error('Preview failed:', error);
+      toast.error('Preview Failed', {
+        description: 'There was an error generating the preview.',
+        duration: 4000,
+      });
+    }
   }, [state.sections]);
   
   const importHTML = useCallback((html: string) => {
     try {
       // New parser returns sections directly with proper structure
       const parsed = parseHTML(html);
+      
+      if (!parsed || !parsed.sections || parsed.sections.length === 0) {
+        toast.warning('No Content Found', {
+          description: 'The HTML file appears to be empty or contains no valid content.',
+          duration: 4000,
+        });
+        return;
+      }
       
       // Use sections from parser (preserves layout for editor-generated HTML)
       dispatch({ type: 'SET_SECTIONS', payload: parsed.sections });
@@ -49,14 +85,25 @@ export function TopToolbar() {
         dispatch({ type: 'PUSH_HISTORY' });
       }, 0);
       
-      toast.success(parsed.isEditorGenerated 
-        ? 'HTML imported with layout preserved!' 
-        : 'External HTML imported successfully!'
+      const sectionCount = parsed.sections.length;
+      const blockCount = parsed.sections.reduce((sum, s) => 
+        sum + s.blocks.reduce((bSum, col) => bSum + col.length, 0), 0
       );
+      
+      toast.success('Import Successful', {
+        description: parsed.isEditorGenerated 
+          ? `Imported  (layout preserved)`
+          : `Imported from external HTML`,
+        duration: 4000,
+      });
+      
       setShowImportDialog(false);
     } catch (error) {
       console.error('Import error:', error);
-      toast.error('Failed to import HTML. Please check the file format.');
+      toast.error('Import Failed', {
+        description: error instanceof Error ? error.message : 'Failed to parse HTML. Please check the file format.',
+        duration: 5000,
+      });
     }
   }, [dispatch]);
   
@@ -64,13 +111,33 @@ export function TopToolbar() {
     const file = e.target.files?.[0];
     if (!file) return;
     
+    // Validate file type
+    if (!file.name.endsWith('.html') && !file.name.endsWith('.htm')) {
+      toast.error('Invalid File Type', {
+        description: 'Please select an HTML file (.html or .htm).',
+        duration: 4000,
+      });
+      e.target.value = '';
+      return;
+    }
+    
+    // Show loading toast
+    const loadingToast = toast.loading('Importing HTML...', {
+      description: 'Please wait while we process your file.',
+    });
+    
     const reader = new FileReader();
     reader.onload = (event) => {
+      toast.dismiss(loadingToast);
       const html = event.target?.result as string;
       importHTML(html);
     };
     reader.onerror = () => {
-      toast.error('Failed to read file');
+      toast.dismiss(loadingToast);
+      toast.error('File Read Error', {
+        description: 'There was an error reading the file. Please try again.',
+        duration: 4000,
+      });
     };
     reader.readAsText(file);
     
@@ -79,13 +146,31 @@ export function TopToolbar() {
   }, [importHTML]);
   
   const handleLoadMockData = useCallback((type: 'agreement' | 'simple' | 'rich' | 'loan') => {
-    const templates = {
-      agreement: mockAgreementHTML,
-      simple: mockSimpleFormHTML,
-      rich: mockRichTextHTML,
-      loan: mockLoanAgreementHTML,
-    };
-    importHTML(templates[type]);
+    try {
+      const templates = {
+        agreement: mockAgreementHTML,
+        simple: mockSimpleFormHTML,
+        rich: mockRichTextHTML,
+        loan: mockLoanAgreementHTML,
+      };
+      
+      const templateNames = {
+        agreement: 'Financial Agreement',
+        simple: 'Simple Contact Form',
+        rich: 'Rich Text Content',
+        loan: 'FinTech Loan Agreement',
+      };
+      
+      importHTML(templates[type]);
+      
+      // Note: importHTML will show its own success toast
+    } catch (error) {
+      console.error('Template load error:', error);
+      toast.error('Template Load Failed', {
+        description: 'There was an error loading the template. Please try again.',
+        duration: 4000,
+      });
+    }
   }, [importHTML]);
 
   return (

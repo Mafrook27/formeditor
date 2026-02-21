@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useCallback, useEffect, useRef, type ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useCallback, useEffect, useRef, useMemo, type ReactNode } from 'react';
 import { editorReducer, ACTIONS, type EditorAction } from './editorReducer';
 import type { EditorState, EditorBlock, EditorSection, BlockType } from './editorConfig';
 import { getInitialState, getDefaultBlockProps, createSection } from './editorConfig';
@@ -19,6 +19,7 @@ interface EditorContextValue {
   updateBlockWithHistory: (blockId: string, updates: Partial<EditorBlock>) => void;
   moveBlock: (blockId: string, toSectionId: string, toColumnIndex: number, toIndex?: number) => void;
   reorderBlocks: (sectionId: string, columnIndex: number, oldIndex: number, newIndex: number) => void;
+  reorderSections: (oldIndex: number, newIndex: number) => void;
   selectBlock: (blockId: string | null) => void;
   selectSection: (sectionId: string | null) => void;
   duplicateBlock: (blockId: string) => void;
@@ -43,9 +44,24 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     historyIndex: 0,
   });
 
-  const pushHistoryRef = useRef<() => void>(() => {});
-  const pushHistory = useCallback(() => {
-    dispatch({ type: ACTIONS.PUSH_HISTORY });
+  const pushHistoryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pushHistoryRef = useRef<(debounce?: boolean) => void>(() => {});
+
+  // pushHistory(true) — debounced (used for inspector text/slider changes)
+  // pushHistory()    — immediate (used for add/remove/move/duplicate)
+  const pushHistory = useCallback((debounce = false) => {
+    if (debounce) {
+      if (pushHistoryTimerRef.current) clearTimeout(pushHistoryTimerRef.current);
+      pushHistoryTimerRef.current = setTimeout(() => {
+        dispatch({ type: ACTIONS.PUSH_HISTORY });
+      }, 400);
+    } else {
+      if (pushHistoryTimerRef.current) {
+        clearTimeout(pushHistoryTimerRef.current);
+        pushHistoryTimerRef.current = null;
+      }
+      dispatch({ type: ACTIONS.PUSH_HISTORY });
+    }
   }, []);
   pushHistoryRef.current = pushHistory;
 
@@ -93,7 +109,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
 
   const updateBlockWithHistory = useCallback((blockId: string, updates: Partial<EditorBlock>) => {
     dispatch({ type: ACTIONS.UPDATE_BLOCK, payload: { blockId, updates } });
-    pushHistoryRef.current();
+    // Debounce history push for inspector edits (sliders, text inputs fire rapidly)
+    pushHistoryRef.current(true);
   }, []);
 
   const moveBlock = useCallback((blockId: string, toSectionId: string, toColumnIndex: number, toIndex?: number) => {
@@ -103,6 +120,11 @@ export function EditorProvider({ children }: { children: ReactNode }) {
 
   const reorderBlocks = useCallback((sectionId: string, columnIndex: number, oldIndex: number, newIndex: number) => {
     dispatch({ type: ACTIONS.REORDER_BLOCKS, payload: { sectionId, columnIndex, oldIndex, newIndex } });
+    pushHistoryRef.current();
+  }, []);
+
+  const reorderSections = useCallback((oldIndex: number, newIndex: number) => {
+    dispatch({ type: ACTIONS.REORDER_SECTIONS, payload: { oldIndex, newIndex } });
     pushHistoryRef.current();
   }, []);
 
@@ -163,12 +185,17 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     return findBlock(state.selectedBlockId)?.block || null;
   }, [state.selectedBlockId, findBlock]);
 
-  const value: EditorContextValue = {
+  const value: EditorContextValue = useMemo(() => ({
     state, dispatch, addBlock, removeBlock, updateBlock, updateBlockWithHistory,
-    moveBlock, reorderBlocks, selectBlock, selectSection, duplicateBlock,
+    moveBlock, reorderBlocks, reorderSections, selectBlock, selectSection, duplicateBlock,
     togglePreview, setZoom, setDragging, addSection, removeSection,
     undo, redo, findBlock, getSelectedBlock,
-  };
+  }), [
+    state, dispatch, addBlock, removeBlock, updateBlock, updateBlockWithHistory,
+    moveBlock, reorderBlocks, reorderSections, selectBlock, selectSection, duplicateBlock,
+    togglePreview, setZoom, setDragging, addSection, removeSection,
+    undo, redo, findBlock, getSelectedBlock,
+  ]);
 
   return <EditorContext.Provider value={value}>{children}</EditorContext.Provider>;
 }

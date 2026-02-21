@@ -1,13 +1,16 @@
 import React, { memo } from 'react';
 import { useDroppable } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { BlockWrapper } from '../blocks/BlockWrapper';
 import { BlockRenderer } from '../blocks/BlockRenderer';
 import { useEditor } from '../EditorContext';
 import type { EditorSection, EditorBlock } from '../editorConfig';
-import { Plus, Trash2, Columns2, Columns3, LayoutGrid } from 'lucide-react';
+import { Plus, Trash2, Columns2, Columns3, LayoutGrid, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { toast } from 'sonner';
 
 interface SectionColumnProps {
   section: EditorSection;
@@ -59,8 +62,33 @@ export const SectionContainer = memo(function SectionContainer({ section, index 
   const { state, removeSection, selectSection, addSection } = useEditor();
   const isPreview = state.isPreviewMode;
   const isSelected = state.selectedSectionId === section.id;
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
+
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: section.id,
+    data: { type: 'section', section },
+    disabled: isPreview,
+  });
+
+  const sortableStyle: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition: isDragging ? 'none' : transition,
+    opacity: isDragging ? 0.5 : 1,
+    position: 'relative' as const,
+    zIndex: isDragging ? 10 : undefined,
+  };
 
   const gridCols: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3' };
+
+  const handleDeleteSection = React.useCallback(() => {
+    removeSection(section.id);
+    setShowDeleteConfirm(false);
+    toast.success('Section deleted', {
+      description: 'The section and all its blocks have been removed.',
+    });
+  }, [section.id, removeSection]);
+
+  const hasBlocks = section.blocks.some(col => col.length > 0);
 
   if (isPreview) {
     return (
@@ -73,7 +101,7 @@ export const SectionContainer = memo(function SectionContainer({ section, index 
   }
 
   return (
-    <div className="group/section relative mb-4">
+    <div ref={setNodeRef} style={sortableStyle} className="group/section relative mb-4">
       {/* Section header */}
       <div
         className={`flex items-center justify-between px-3 py-1.5 rounded-t-md border border-b-0 cursor-pointer ${
@@ -83,6 +111,17 @@ export const SectionContainer = memo(function SectionContainer({ section, index 
         onClick={() => selectSection(section.id)}
       >
         <div className="flex items-center gap-2">
+          {/* Section drag handle */}
+          <button
+            className="p-0.5 rounded-sm hover:bg-secondary cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground opacity-0 group-hover/section:opacity-100"
+            style={{ transitionProperty: 'opacity, background-color, color', transitionDuration: 'var(--transition-fast)' }}
+            title="Drag to reorder section"
+            onClick={(e) => e.stopPropagation()}
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="h-3.5 w-3.5" />
+          </button>
           <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground" />
           <span className="text-xs font-medium text-muted-foreground">
             Section · {section.columns} {section.columns === 1 ? 'Column' : 'Columns'}
@@ -92,7 +131,7 @@ export const SectionContainer = memo(function SectionContainer({ section, index 
           <TooltipProvider delayDuration={200}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); removeSection(section.id); }}>
+                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }}>
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger>
@@ -142,6 +181,19 @@ export const SectionContainer = memo(function SectionContainer({ section, index 
           </TooltipProvider>
         </div>
       </div>
+      
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Delete Section"
+        description={hasBlocks 
+          ? "This section contains blocks. Are you sure you want to delete it? All blocks in this section will be permanently removed."
+          : "Are you sure you want to delete this section?"}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="destructive"
+        onConfirm={handleDeleteSection}
+      />
     </div>
   );
 });
