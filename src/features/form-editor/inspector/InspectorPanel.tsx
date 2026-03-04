@@ -445,6 +445,47 @@ const VisualSection = memo(function VisualSection({
         </Popover>
       </div>
       <div className="space-y-1.5">
+        <Label className="text-xs">Text Color</Label>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button className="h-8 w-full rounded-md border border-input bg-background px-3 text-xs flex items-center justify-between hover:bg-accent hover:text-accent-foreground">
+              <span className="flex items-center gap-2">
+                <div
+                  className="h-4 w-4 rounded border border-input"
+                  style={{ backgroundColor: b.textColor || "transparent" }}
+                />
+                <span>{b.textColor || "inherit"}</span>
+              </span>
+              {b.textColor && (
+                <span
+                  className="text-muted-foreground hover:text-foreground ml-2 cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onUpdate({ textColor: undefined } as any);
+                  }}
+                >
+                  ×
+                </span>
+              )}
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-3" align="start">
+            <ColorPicker
+              value={b.textColor || "#1e293b"}
+              onChange={(color) => onUpdate({ textColor: color } as any)}
+            >
+              <ColorPickerSelection className="h-32 rounded-lg mb-3" />
+              <ColorPickerHue className="mb-2" />
+              <ColorPickerAlpha className="mb-3" />
+              <div className="flex items-center gap-2">
+                <ColorPickerOutput />
+                <ColorPickerFormat />
+              </div>
+            </ColorPicker>
+          </PopoverContent>
+        </Popover>
+      </div>
+      <div className="space-y-1.5">
         <Label className="text-xs">Font Family</Label>
         <Select
           value={b.fontFamily || "__default"}
@@ -767,7 +808,7 @@ const FieldSettingsSection = memo(function FieldSettingsSection({
           <div className="space-y-1">
             {(b.options || []).map((opt: string, i: number) => (
               <OptionItem
-                key={`${opt}-${i}`}
+                key={i}
                 opt={opt}
                 index={i}
                 updateOption={updateOption}
@@ -1066,6 +1107,64 @@ const TableContentSection = memo(function TableContentSection({
           onCheckedChange={(checked) => onUpdate({ headerRow: checked } as any)}
         />
       </div>
+
+      <div className="flex items-center justify-between">
+        <Label className="text-xs">Striped Rows</Label>
+        <Switch
+          checked={b.stripedRows || false}
+          onCheckedChange={(checked) =>
+            onUpdate({ stripedRows: checked } as any)
+          }
+        />
+      </div>
+
+      {b.rows && b.rows[0] && b.rows[0].length > 0 && (
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium">Column Alignment</Label>
+          <div className="space-y-1">
+            {(b.rows[0] as string[]).map((_: string, ci: number) => {
+              const currentAlign = (b.columnAlignments || [])[ci] || "left";
+              return (
+                <div key={ci} className="flex items-center justify-between">
+                  <span className="text-[11px] text-muted-foreground">
+                    Col {ci + 1}
+                  </span>
+                  <div className="flex border rounded overflow-hidden">
+                    {(
+                      [
+                        { value: "left", Icon: AlignLeft },
+                        { value: "center", Icon: AlignCenter },
+                        { value: "right", Icon: AlignRight },
+                      ] as const
+                    ).map(({ value, Icon }) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => {
+                          const aligns: string[] = [
+                            ...(b.columnAlignments ||
+                              Array(b.rows[0].length).fill("left")),
+                          ];
+                          aligns[ci] = value;
+                          onUpdate({ columnAlignments: aligns } as any);
+                        }}
+                        className={`p-1 transition-colors ${
+                          currentAlign === value
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-background text-muted-foreground hover:bg-muted"
+                        }`}
+                        title={value}
+                      >
+                        <Icon className="h-3 w-3" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <Separator className="my-3" />
 
@@ -1786,7 +1885,7 @@ export const InspectorPanel = memo(function InspectorPanel() {
                       <ColorPicker
                         value={section.backgroundColor || "#ffffff"}
                         onChange={(color) =>
-                          onUpdateSection({ backgroundColor: color })
+                          onUpdateSection({ backgroundColor: color as string })
                         }
                       >
                         <ColorPickerSelection className="h-32 rounded-lg mb-3" />
@@ -1831,7 +1930,7 @@ export const InspectorPanel = memo(function InspectorPanel() {
                       <ColorPicker
                         value={section.textColor || "#1e293b"}
                         onChange={(color) =>
-                          onUpdateSection({ textColor: color })
+                          onUpdateSection({ textColor: color as string })
                         }
                       >
                         <ColorPickerSelection className="h-32 rounded-lg mb-3" />
@@ -1852,6 +1951,10 @@ export const InspectorPanel = memo(function InspectorPanel() {
       </div>
     );
   }
+
+  // TypeScript flow analysis can't narrow block to non-null after the
+  // section && !block early-return above, so we add an explicit guard.
+  if (!block) return null;
 
   const onUpdate: UpdateFn = (updates) =>
     updateBlockWithHistory(block.id, updates);

@@ -21,17 +21,21 @@ export const RadioGroupBlock = memo(function RadioGroupBlock({
             : "flex flex-col gap-2"
         }
       >
-        {(block.options || []).map((opt, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <RadioGroupItem value={opt} id={`${block.id}-${i}`} />
-            <Label
-              htmlFor={`${block.id}-${i}`}
-              className="text-sm font-normal cursor-pointer"
-            >
-              {opt}
-            </Label>
-          </div>
-        ))}
+        {(block.options || []).map((opt, i) => {
+          const trimmed = opt?.trim();
+          if (!trimmed) return null;
+          return (
+            <div key={i} className="flex items-center gap-2">
+              <RadioGroupItem value={trimmed} id={`${block.id}-${i}`} />
+              <Label
+                htmlFor={`${block.id}-${i}`}
+                className="text-sm font-normal cursor-pointer"
+              >
+                {trimmed}
+              </Label>
+            </div>
+          );
+        })}
       </RadioGroup>
       {block.helpText && (
         <p className="text-xs text-muted-foreground">{block.helpText}</p>

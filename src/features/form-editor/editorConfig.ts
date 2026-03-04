@@ -43,6 +43,7 @@ export interface BaseBlockProps {
   locked: boolean;
   // Visual styling (Phase 4A)
   backgroundColor?: string;
+  textColor?: string;
   fontFamily?: string;
   blockBorderWidth?: number;
   blockBorderColor?: string;
@@ -185,6 +186,8 @@ export interface TableBlockProps extends BaseBlockProps {
   headerRow: boolean;
   columnWidths?: number[];
   rowHeights?: number[];
+  stripedRows?: boolean;
+  columnAlignments?: string[]; // 'left' | 'center' | 'right' per column index
 }
 
 export interface ListBlockProps extends BaseBlockProps {

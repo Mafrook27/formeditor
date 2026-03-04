@@ -3,7 +3,9 @@
     "allow": [
       "Bash(head:*)",
       "Bash(tail:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(node:*)"
     ]
-  }
+  },
+  "outputStyle": "Learning"
 }

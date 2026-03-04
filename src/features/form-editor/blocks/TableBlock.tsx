@@ -1,7 +1,7 @@
 import React, { memo, useState, useRef, useEffect, useCallback } from "react";
 import { useEditor } from "../EditorContext";
 import { Button } from "@/components/ui/button";
-import { Plus, Minus } from "lucide-react";
+import { Plus, Minus, X, Copy } from "lucide-react";
 import { containsPlaceholders } from "../parser/MarkParser";
 import {
   PlaceholderDropdown,
@@ -88,6 +88,7 @@ export const TableBlock = memo(function TableBlock({
     col: number;
   } | null>(null);
   const [cellValue, setCellValue] = useState("");
+  const [hoveredCol, setHoveredCol] = useState<number | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const tableRef = useRef<HTMLTableElement>(null);
   const [resizingCol, setResizingCol] = useState<number | null>(null);
@@ -391,9 +392,13 @@ export const TableBlock = memo(function TableBlock({
     ]);
     const equalWidth = 100 / (colWidths.length + 1);
     const normalized = Array(colWidths.length + 1).fill(equalWidth);
+    const newAlignments = block.columnAlignments
+      ? [...block.columnAlignments, "left"]
+      : undefined;
     updateBlockWithHistory(block.id, {
       rows: newRows,
       columnWidths: normalized,
+      ...(newAlignments ? { columnAlignments: newAlignments } : {}),
     });
   };
 
@@ -404,11 +409,51 @@ export const TableBlock = memo(function TableBlock({
     const newWidths = colWidths.filter((_, ci) => ci !== colIdx);
     const total = newWidths.reduce((s, w) => s + w, 0);
     const normalized = newWidths.map((w) => (w / total) * 100);
+    const newAlignments = block.columnAlignments
+      ? block.columnAlignments.filter((_, ci) => ci !== colIdx)
+      : undefined;
     updateBlockWithHistory(block.id, {
       rows: newRows,
       columnWidths: normalized,
+      ...(newAlignments ? { columnAlignments: newAlignments } : {}),
     });
   };
+
+  const duplicateRow = (idx: number) => {
+    const rowCopy = [...rows[idx]];
+    const newRows = [
+      ...rows.slice(0, idx + 1),
+      rowCopy,
+      ...rows.slice(idx + 1),
+    ];
+    const newHeights = block.rowHeights
+      ? [
+          ...block.rowHeights.slice(0, idx + 1),
+          block.rowHeights[idx] || 0,
+          ...block.rowHeights.slice(idx + 1),
+        ]
+      : undefined;
+    rowIds.current.splice(idx + 1, 0, `r${rowIdCounter.current++}`);
+    updateBlockWithHistory(block.id, {
+      rows: newRows,
+      ...(newHeights ? { rowHeights: newHeights } : {}),
+    });
+  };
+  // Returns the backgroundColor for a table body row.
+  // isHeader rows already have their own "bg-muted/50" className - skip them.
+  // When stripedRows is false: keep the original subtle alternating style.
+  // When stripedRows is true: apply a more visible alternating stripe color.
+  function getRowBackground(
+    rowIdx: number,
+    isHeader: boolean,
+    stripedRows: boolean,
+  ): string | undefined {
+    if (isHeader || rowIdx < 0) return undefined;
+    if (stripedRows) {
+      return rowIdx % 2 === 0 ? "rgba(59,130,246,0.06)" : undefined;
+    }
+    return rowIdx % 2 === 1 ? "rgba(0,0,0,0.02)" : undefined;
+  }
 
   const isEditable = !isPreview && !block.locked;
 
@@ -495,6 +540,78 @@ export const TableBlock = memo(function TableBlock({
 
   return (
     <div className="space-y-2" style={{ minWidth: 0 }}>
+      {/* Column control strip — hover to see delete button per column */}
+      {isEditable && (
+        <div style={{ display: "flex", marginBottom: 2 }}>
+          <div style={{ flex: 1, minWidth: 0, display: "flex" }}>
+            {activeWidths.map((w, ci) => {
+              const isHov = hoveredCol === ci;
+              const canDelete = (rows[0]?.length || 0) > 1;
+              return (
+                <div
+                  key={colIds.current[ci] || ci}
+                  style={{
+                    flex: `0 0 ${w}%`,
+                    minWidth: 0,
+                    height: 22,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: isHov
+                      ? "rgba(239,68,68,0.10)"
+                      : "rgba(100,100,100,0.06)",
+                    borderRadius: 3,
+                    transition: "background-color 0.15s",
+                    cursor: "default",
+                  }}
+                  onMouseEnter={() => setHoveredCol(ci)}
+                  onMouseLeave={() => setHoveredCol(null)}
+                >
+                  {isHov && canDelete ? (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeColumn(ci);
+                        setHoveredCol(null);
+                      }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        fontSize: 11,
+                        color: "#ef4444",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        padding: "0 4px",
+                        fontWeight: 600,
+                      }}
+                      title={`Delete column ${ci + 1}`}
+                    >
+                      <X style={{ width: 11, height: 11 }} />
+                      Delete col {ci + 1}
+                    </button>
+                  ) : (
+                    <span
+                      style={{
+                        fontSize: 11,
+                        color: "rgba(100,100,100,0.45)",
+                        userSelect: "none",
+                      }}
+                    >
+                      Col {ci + 1}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {/* Spacer aligns with the row-delete gutter */}
+          <div style={{ width: 52, flexShrink: 0 }} />
+        </div>
+      )}
+
       <div style={{ minWidth: 0, width: "100%", display: "flex" }}>
         <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
           <table
@@ -522,14 +639,15 @@ export const TableBlock = memo(function TableBlock({
               return (
                 <Wrapper key={rowIds.current[rowIdx]}>
                   <tr
-                    className={
-                      isHeader
-                        ? "bg-muted/50"
-                        : rowIdx % 2 === 1
-                          ? "bg-muted/20"
-                          : ""
-                    }
-                    style={{ height: rh && rh > 0 ? `${rh}px` : undefined }}
+                    className={isHeader ? "bg-muted/50" : ""}
+                    style={{
+                      height: rh && rh > 0 ? `${rh}px` : undefined,
+                      backgroundColor: getRowBackground(
+                        block.headerRow ? rowIdx - 1 : rowIdx,
+                        !!isHeader,
+                        !!block.stripedRows,
+                      ),
+                    }}
                   >
                     {row.map((cell, ci) => {
                       const isCellEditing =
@@ -545,10 +663,26 @@ export const TableBlock = memo(function TableBlock({
                           key={colIds.current[ci]}
                           className={`border border-border p-2 ${isHeader ? "font-semibold text-left" : ""} ${isCellEditing ? "p-0" : ""} ${editorStyles.canvasCell}`}
                           onClick={() => handleCellClick(rowIdx, ci)}
+                          onMouseEnter={() => {
+                            if (isEditable && !editingCell) setHoveredCol(ci);
+                          }}
+                          onMouseLeave={() => {
+                            if (isEditable) setHoveredCol(null);
+                          }}
                           style={{
                             minWidth: 0,
                             position: needsRelative ? "relative" : undefined,
                             verticalAlign: "top",
+                            textAlign: (block.columnAlignments?.[ci] ||
+                              "left") as React.CSSProperties["textAlign"],
+                            backgroundColor:
+                              isEditable &&
+                              hoveredCol === ci &&
+                              !isCellEditing &&
+                              !editingCell
+                                ? "rgba(239,68,68,0.04)"
+                                : undefined,
+                            transition: "background-color 0.15s",
                           }}
                         >
                           {isCellEditing ? (
@@ -589,22 +723,32 @@ export const TableBlock = memo(function TableBlock({
         </div>
 
         {isEditable && (
-          <div style={{ width: 28, flexShrink: 0 }}>
+          <div style={{ width: 52, flexShrink: 0 }}>
             {rows.map((_, rowIdx) => {
               const isHeader = block.headerRow && rowIdx === 0;
               const rh = activeRowHeights[rowIdx];
               return (
                 <div
                   key={rowIds.current[rowIdx]}
-                  className={`flex items-start justify-center border-b border-border ${isHeader ? "bg-muted/50" : ""}`}
+                  className={`flex items-start justify-center gap-0.5 border-b border-border ${isHeader ? "bg-muted/50" : ""}`}
                   style={{ minHeight: rh && rh > 0 ? rh : 36 }}
                 >
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-muted-foreground hover:text-foreground mt-1"
+                    onClick={() => duplicateRow(rowIdx)}
+                    title="Duplicate row"
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6 text-destructive hover:text-destructive mt-1"
                     onClick={() => removeRow(rowIdx)}
                     disabled={rows.length <= 1}
+                    title="Delete row"
                   >
                     <Minus className="h-3 w-3" />
                   </Button>
@@ -634,16 +778,6 @@ export const TableBlock = memo(function TableBlock({
             data-testid="add-column-btn"
           >
             <Plus className="h-3 w-3" /> Column
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs gap-1"
-            onClick={() => removeColumn((rows[0]?.length || 1) - 1)}
-            disabled={(rows[0]?.length || 0) <= 1}
-            data-testid="remove-column-btn"
-          >
-            <Minus className="h-3 w-3" /> Column
           </Button>
         </div>
       )}

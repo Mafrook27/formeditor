@@ -1931,6 +1931,8 @@ function restoreTypedBlock(
       }
       const colWidthsStr = element.getAttribute("data-column-widths");
       const rowHeightsStr = element.getAttribute("data-row-heights");
+      const colAlignmentsStr = element.getAttribute("data-column-alignments");
+      const stripedRowsAttr = element.getAttribute("data-striped-rows");
       let parsedRowHeights: number[] | undefined;
       try {
         if (rowHeightsStr)
@@ -1946,6 +1948,15 @@ function restoreTypedBlock(
       } catch {
         /* keep default */
       }
+      let parsedColAlignments: string[] | undefined;
+      try {
+        if (colAlignmentsStr)
+          parsedColAlignments = JSON.parse(colAlignmentsStr) as string[];
+      } catch {
+        /* keep default */
+      }
+      const parsedStripedRows =
+        stripedRowsAttr === null ? undefined : stripedRowsAttr === "true";
       return {
         ...baseProps,
         type: BLOCK_TYPES.TABLE,
@@ -1954,6 +1965,8 @@ function restoreTypedBlock(
         headerRow: element.getAttribute("data-header-row") === "true",
         columnWidths: parsedColWidths,
         rowHeights: hasAnyRowHeight ? parsedRowHeights : undefined,
+        stripedRows: parsedStripedRows,
+        columnAlignments: parsedColAlignments,
       } as EditorBlock;
     }
 

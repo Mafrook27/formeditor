@@ -51,6 +51,7 @@ export const BlockWrapper = memo(function BlockWrapper({
 
   const visualStyle: React.CSSProperties = {
     backgroundColor: block.backgroundColor || undefined,
+    color: (block as any).textColor || undefined,
     fontFamily: block.fontFamily || undefined,
     border: block.blockBorderWidth
       ? `${block.blockBorderWidth}px ${block.blockBorderStyle || "solid"} ${block.blockBorderColor || "#e2e8f0"}`

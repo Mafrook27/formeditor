@@ -25,11 +25,15 @@ export const DropdownBlock = memo(function DropdownBlock({
           <SelectValue placeholder="Select an option..." />
         </SelectTrigger>
         <SelectContent>
-          {(block.options || []).map((opt, i) => (
-            <SelectItem key={i} value={opt}>
-              {opt}
-            </SelectItem>
-          ))}
+          {(block.options || []).map((opt, i) => {
+            const trimmed = opt?.trim();
+            if (!trimmed) return null;
+            return (
+              <SelectItem key={i} value={trimmed}>
+                {trimmed}
+              </SelectItem>
+            );
+          })}
         </SelectContent>
       </Select>
       {block.helpText && (

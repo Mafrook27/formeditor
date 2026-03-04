@@ -58,9 +58,7 @@ export function EditorLayout() {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // Increased to prevent accidental drags
-        delay: 100, // Small delay to distinguish clicks from drags
-        tolerance: 5,
+        distance: 5,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -75,12 +73,12 @@ export function EditorLayout() {
 
       // Store the active block data for DragOverlay
       const activeData = event.active.data.current;
-      if (activeData?.type === "block") {
-        setActiveBlock(activeData.block);
-      } else if (activeData?.type === "library-block") {
+      if (activeData?.type === "block" && activeData.block) {
+        setActiveBlock(activeData.block as EditorBlock);
+      } else if (activeData?.type === "library-block" && activeData.blockType) {
         // Use full default props so BlockRenderer never receives an incomplete block
         setActiveBlock(getDefaultBlockProps(activeData.blockType as BlockType));
-      } else if (activeData?.type === "library-section") {
+      } else if (activeData?.type === "library-section" && activeData.columns) {
         setActiveSectionCols(activeData.columns as 1 | 2 | 3);
       }
     },
@@ -155,9 +153,9 @@ export function EditorLayout() {
         // Determine target column
         if (overData?.type === "column") {
           addBlock(blockType, overData.sectionId, overData.columnIndex);
-        } else if (overData?.type === "block") {
+        } else if (overData?.type === "block" && overData.block) {
           // Drop on existing block - find its location
-          const targetBlock = overData.block;
+          const targetBlock = overData.block as EditorBlock;
           for (const section of sections) {
             for (let ci = 0; ci < section.blocks.length; ci++) {
               const idx = section.blocks[ci].findIndex(
@@ -177,16 +175,16 @@ export function EditorLayout() {
       }
 
       // Reordering existing blocks
-      if (activeData?.type === "block" && overData) {
-        const activeBlock = activeData.block;
-        const activeSectionId = activeData.sectionId;
-        const activeColumnIndex = activeData.columnIndex;
+      if (activeData?.type === "block" && overData && activeData.block) {
+        const activeBlock = activeData.block as EditorBlock;
+        const activeSectionId = activeData.sectionId as string;
+        const activeColumnIndex = activeData.columnIndex as number;
 
         if (overData.type === "column") {
           // Move to a column
           moveBlock(activeBlock.id, overData.sectionId, overData.columnIndex);
-        } else if (overData.type === "block") {
-          const overBlock = overData.block;
+        } else if (overData.type === "block" && overData.block) {
+          const overBlock = overData.block as EditorBlock;
           const overSectionId = overData.sectionId;
           const overColumnIndex = overData.columnIndex;
 

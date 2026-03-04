@@ -21,17 +21,21 @@ export const CheckboxGroupBlock = memo(function CheckboxGroupBlock({
             : "flex flex-col gap-2"
         }
       >
-        {(block.options || []).map((opt, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <Checkbox id={`${block.id}-cb-${i}`} />
-            <Label
-              htmlFor={`${block.id}-cb-${i}`}
-              className="text-sm font-normal cursor-pointer"
-            >
-              {opt}
-            </Label>
-          </div>
-        ))}
+        {(block.options || []).map((opt, i) => {
+          const trimmed = opt?.trim();
+          if (!trimmed) return null;
+          return (
+            <div key={i} className="flex items-center gap-2">
+              <Checkbox id={`${block.id}-cb-${i}`} />
+              <Label
+                htmlFor={`${block.id}-cb-${i}`}
+                className="text-sm font-normal cursor-pointer"
+              >
+                {trimmed}
+              </Label>
+            </div>
+          );
+        })}
       </div>
       {block.helpText && (
         <p className="text-xs text-muted-foreground">{block.helpText}</p>

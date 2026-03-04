@@ -48,6 +48,7 @@ function renderBlockHTML(block: EditorBlock): string {
   const visualBg = b.backgroundColor
     ? `background-color: ${b.backgroundColor};`
     : "";
+  const visualTextColor = b.textColor ? `color: ${b.textColor};` : "";
   const visualFont = b.fontFamily ? `font-family: ${b.fontFamily};` : "";
   const visualBorder = b.blockBorderWidth
     ? `border: ${b.blockBorderWidth}px ${b.blockBorderStyle || "solid"} ${b.blockBorderColor || "#e2e8f0"};`
@@ -55,7 +56,7 @@ function renderBlockHTML(block: EditorBlock): string {
   const visualRadius = b.blockBorderRadius
     ? `border-radius: ${b.blockBorderRadius}px;`
     : "";
-  const visualStyles = [visualBg, visualFont, visualBorder, visualRadius]
+  const visualStyles = [visualBg, visualTextColor, visualFont, visualBorder, visualRadius]
     .filter(Boolean)
     .join(" ");
 
@@ -64,7 +65,7 @@ function renderBlockHTML(block: EditorBlock): string {
   switch (block.type) {
     case BLOCK_TYPES.RAW_HTML: {
       const rawBlock = block as RawHTMLBlockProps;
-      return `<div ${commonAttrs} data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${margin}">${rawBlock.htmlContent}</div>`;
+      return `<div ${commonAttrs} data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${visualStyles} ${margin}">${rawBlock.htmlContent}</div>`;
     }
 
     case BLOCK_TYPES.HEADING: {
@@ -92,29 +93,29 @@ function renderBlockHTML(block: EditorBlock): string {
       const target = block.openInNewTab
         ? ' target="_blank" rel="noopener noreferrer"'
         : "";
-      return `<div ${commonAttrs} data-text="${escapeHtml(block.text)}" data-url="${escapeHtml(block.url)}" data-open-new-tab="${block.openInNewTab}" data-underline="${block.underline}" data-font-size="${block.fontSize}" data-font-weight="${block.fontWeight}" data-align="${block.textAlign}" data-line-height="${block.lineHeight}" data-color="${block.color || "#0066cc"}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" data-padding-x="${block.paddingX || 0}" data-padding-y="${block.paddingY || 0}" style="text-align: ${block.textAlign}; ${margin} ${padding}"><a href="${escapeHtml(block.url || "#")}"${target} style="font-size: ${block.fontSize}px; font-weight: ${block.fontWeight}; line-height: ${block.lineHeight}; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces; ${color} ${textDecoration}">${escapeHtml(block.text || "Click here")}</a></div>`;
+      return `<div ${commonAttrs} data-text="${escapeHtml(block.text)}" data-url="${escapeHtml(block.url)}" data-open-new-tab="${block.openInNewTab}" data-underline="${block.underline}" data-font-size="${block.fontSize}" data-font-weight="${block.fontWeight}" data-align="${block.textAlign}" data-line-height="${block.lineHeight}" data-color="${block.color || "#0066cc"}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" data-padding-x="${block.paddingX || 0}" data-padding-y="${block.paddingY || 0}" style="text-align: ${block.textAlign}; ${visualStyles} ${margin} ${padding}"><a href="${escapeHtml(block.url || "#")}"${target} style="font-size: ${block.fontSize}px; font-weight: ${block.fontWeight}; line-height: ${block.lineHeight}; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces; ${color} ${textDecoration}">${escapeHtml(block.text || "Click here")}</a></div>`;
     }
 
     case BLOCK_TYPES.DIVIDER:
-      return `<hr ${commonAttrs} data-thickness="${block.thickness}" data-style="${block.style}" data-color="${block.color || "#000000"}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="border: none; border-top: ${block.thickness}px ${block.style} ${block.color || "#000000"}; ${margin}" />`;
+      return `<div ${commonAttrs} data-thickness="${block.thickness}" data-style="${block.style}" data-color="${block.color || "#000000"}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${visualStyles} ${margin}"><hr style="border: none; border-top: ${block.thickness}px ${block.style} ${block.color || "#000000"}; margin: 0; width: 100%;" /></div>`;
 
     case BLOCK_TYPES.IMAGE:
-      return `<div ${commonAttrs} data-src="${escapeHtml(block.src)}" data-alt="${escapeHtml(block.alt)}" data-border-radius="${block.borderRadius}" data-max-height="${block.maxHeight}" data-alignment="${block.alignment}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${margin}"><img src="${escapeHtml(block.src)}" alt="${escapeHtml(block.alt)}" style="max-width: 100%; border-radius: ${block.borderRadius}px; max-height: ${block.maxHeight}px; display: block; margin: 0 auto;" /></div>`;
+      return `<div ${commonAttrs} data-src="${escapeHtml(block.src)}" data-alt="${escapeHtml(block.alt)}" data-border-radius="${block.borderRadius}" data-max-height="${block.maxHeight}" data-alignment="${block.alignment}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${visualStyles} ${margin}"><img src="${escapeHtml(block.src)}" alt="${escapeHtml(block.alt)}" style="max-width: 100%; border-radius: ${block.borderRadius}px; max-height: ${block.maxHeight}px; display: block; margin: 0 auto;" /></div>`;
 
     case BLOCK_TYPES.TEXT_INPUT:
-      return `<div ${commonAttrs} data-label="${escapeHtml(block.label)}" data-field-name="${block.fieldName}" data-placeholder="${escapeHtml(block.placeholder)}" data-required="${block.required}" data-validation="${block.validationType}" data-max-length="${block.maxLength || ""}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${margin}">
+      return `<div ${commonAttrs} data-label="${escapeHtml(block.label)}" data-field-name="${block.fieldName}" data-placeholder="${escapeHtml(block.placeholder)}" data-required="${block.required}" data-validation="${block.validationType}" data-max-length="${block.maxLength || ""}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${visualStyles} ${margin}">
   <label for="${block.fieldName}" style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px;">${escapeHtml(block.label)}${block.required ? ' <span style="color: #ef4444;">*</span>' : ""}</label>
   <input type="text" id="${block.fieldName}" name="${block.fieldName}" placeholder="${escapeHtml(block.placeholder)}"${block.required ? ' required aria-required="true"' : ""} style="width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" />
 </div>`;
 
     case BLOCK_TYPES.TEXTAREA:
-      return `<div ${commonAttrs} data-label="${escapeHtml(block.label)}" data-field-name="${block.fieldName}" data-placeholder="${escapeHtml(block.placeholder)}" data-required="${block.required}" data-rows="${block.rows}" data-max-length="${block.maxLength || ""}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${margin}">
+      return `<div ${commonAttrs} data-label="${escapeHtml(block.label)}" data-field-name="${block.fieldName}" data-placeholder="${escapeHtml(block.placeholder)}" data-required="${block.required}" data-rows="${block.rows}" data-max-length="${block.maxLength || ""}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${visualStyles} ${margin}">
   <label for="${block.fieldName}" style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px;">${escapeHtml(block.label)}${block.required ? ' <span style="color: #ef4444;">*</span>' : ""}</label>
   <textarea id="${block.fieldName}" name="${block.fieldName}" rows="${block.rows}" placeholder="${escapeHtml(block.placeholder)}"${block.required ? ' required aria-required="true"' : ""} style="width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; resize: vertical;"></textarea>
 </div>`;
 
     case BLOCK_TYPES.DROPDOWN:
-      return `<div ${commonAttrs} data-label="${escapeHtml(block.label)}" data-field-name="${block.fieldName}" data-required="${block.required}" data-options="${escapeHtml(JSON.stringify(block.options || []))}" data-default-value="${escapeHtml(block.defaultValue || "")}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${margin}">
+      return `<div ${commonAttrs} data-label="${escapeHtml(block.label)}" data-field-name="${block.fieldName}" data-required="${block.required}" data-options="${escapeHtml(JSON.stringify(block.options || []))}" data-default-value="${escapeHtml(block.defaultValue || "")}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${visualStyles} ${margin}">
   <label for="${block.fieldName}" style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px;">${escapeHtml(block.label)}${block.required ? ' <span style="color: #ef4444;">*</span>' : ""}</label>
   <select id="${block.fieldName}" name="${block.fieldName}"${block.required ? ' required aria-required="true"' : ""} style="width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; background: white;">
     <option value="">Select an option...</option>
@@ -122,24 +123,28 @@ function renderBlockHTML(block: EditorBlock): string {
   </select>
 </div>`;
 
-    case BLOCK_TYPES.RADIO_GROUP:
-      return `<fieldset ${commonAttrs} data-label="${escapeHtml(block.label)}" data-field-name="${block.fieldName}" data-required="${block.required}" data-options="${escapeHtml(JSON.stringify(block.options || []))}" data-layout="${block.layout}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${margin}">
-  <legend style="font-size: 14px; font-weight: 500; margin-bottom: 8px;">${escapeHtml(block.label)}${block.required ? ' <span style="color: #ef4444;">*</span>' : ""}</legend>
+    case BLOCK_TYPES.RADIO_GROUP: {
+      const rgLabelColor = b.textColor ? ` color: ${b.textColor};` : "";
+      return `<fieldset ${commonAttrs} data-label="${escapeHtml(block.label)}" data-field-name="${block.fieldName}" data-required="${block.required}" data-options="${escapeHtml(JSON.stringify(block.options || []))}" data-layout="${block.layout}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${visualStyles} ${margin}">
+  <legend style="font-size: 14px; font-weight: 500; margin-bottom: 8px;${rgLabelColor}">${escapeHtml(block.label)}${block.required ? ' <span style="color: #ef4444;">*</span>' : ""}</legend>
   <div style="display: flex; flex-direction: ${block.layout === "horizontal" ? "row" : "column"}; gap: 8px;">
-    ${(block.options || []).map((opt, i) => `<label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;"><input type="radio" name="${block.fieldName}" value="${escapeHtml(opt)}"${block.required && i === 0 ? ' required aria-required="true"' : ""} /> ${escapeHtml(opt)}</label>`).join("\n    ")}
+    ${(block.options || []).map((opt, i) => `<label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;${rgLabelColor}"><input type="radio" name="${block.fieldName}" value="${escapeHtml(opt)}"${block.required && i === 0 ? ' required aria-required="true"' : ""} /> ${escapeHtml(opt)}</label>`).join("\n    ")}
   </div>
 </fieldset>`;
+    }
 
-    case BLOCK_TYPES.CHECKBOX_GROUP:
-      return `<fieldset ${commonAttrs} data-label="${escapeHtml(block.label)}" data-field-name="${block.fieldName}" data-required="${block.required}" data-options="${escapeHtml(JSON.stringify(block.options || []))}" data-layout="${block.layout}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${margin}">
-  <legend style="font-size: 14px; font-weight: 500; margin-bottom: 8px;">${escapeHtml(block.label)}${block.required ? ' <span style="color: #ef4444;">*</span>' : ""}</legend>
+    case BLOCK_TYPES.CHECKBOX_GROUP: {
+      const cbLabelColor = b.textColor ? ` color: ${b.textColor};` : "";
+      return `<fieldset ${commonAttrs} data-label="${escapeHtml(block.label)}" data-field-name="${block.fieldName}" data-required="${block.required}" data-options="${escapeHtml(JSON.stringify(block.options || []))}" data-layout="${block.layout}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${visualStyles} ${margin}">
+  <legend style="font-size: 14px; font-weight: 500; margin-bottom: 8px;${cbLabelColor}">${escapeHtml(block.label)}${block.required ? ' <span style="color: #ef4444;">*</span>' : ""}</legend>
   <div style="display: flex; flex-direction: ${block.layout === "horizontal" ? "row" : "column"}; gap: 8px;">
-    ${(block.options || []).map((opt) => `<label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;"><input type="checkbox" name="${block.fieldName}" value="${escapeHtml(opt)}" /> ${escapeHtml(opt)}</label>`).join("\n    ")}
+    ${(block.options || []).map((opt) => `<label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;${cbLabelColor}"><input type="checkbox" name="${block.fieldName}" value="${escapeHtml(opt)}" /> ${escapeHtml(opt)}</label>`).join("\n    ")}
   </div>
 </fieldset>`;
+    }
 
     case BLOCK_TYPES.SINGLE_CHECKBOX:
-      return `<div ${commonAttrs} data-label="${escapeHtml(block.label)}" data-field-name="${block.fieldName}" data-required="${block.required}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${margin}">
+      return `<div ${commonAttrs} data-label="${escapeHtml(block.label)}" data-field-name="${block.fieldName}" data-required="${block.required}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${visualStyles} ${margin}">
   <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 14px; cursor: pointer; line-height: 1.5;">
     <input type="checkbox" name="${block.fieldName}"${block.required ? ' required aria-required="true"' : ""} style="margin-top: 4px; flex-shrink: 0;" />
     <span>${preservePlaceholders(block.label)}</span>
@@ -147,16 +152,17 @@ function renderBlockHTML(block: EditorBlock): string {
 </div>`;
 
     case BLOCK_TYPES.DATE_PICKER:
-      return `<div ${commonAttrs} data-label="${escapeHtml(block.label)}" data-field-name="${block.fieldName}" data-required="${block.required}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${margin}">
+      return `<div ${commonAttrs} data-label="${escapeHtml(block.label)}" data-field-name="${block.fieldName}" data-required="${block.required}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${visualStyles} ${margin}">
   <label for="${block.fieldName}" style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px;">${escapeHtml(block.label)}${block.required ? ' <span style="color: #ef4444;">*</span>' : ""}</label>
   <input type="date" id="${block.fieldName}" name="${block.fieldName}"${block.required ? ' required aria-required="true"' : ""} style="width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" />
 </div>`;
 
     case BLOCK_TYPES.SIGNATURE: {
       const sigBlock = block as SignatureBlockProps;
-      return `<div ${commonAttrs} id="${sigBlock.fieldName}" data-label="${escapeHtml(sigBlock.label)}" data-field-name="${sigBlock.fieldName}" data-required="${sigBlock.required}" data-signature-url="${escapeHtml(sigBlock.signatureUrl || "")}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" class="signature-area" style="${margin}">
+      const sigLabelStyle = b.textColor ? ` style="color: ${b.textColor};"` : "";
+      return `<div ${commonAttrs} id="${sigBlock.fieldName}" data-label="${escapeHtml(sigBlock.label)}" data-field-name="${sigBlock.fieldName}" data-required="${sigBlock.required}" data-signature-url="${escapeHtml(sigBlock.signatureUrl || "")}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" class="signature-area" style="${visualStyles} ${margin}">
   <div class="signature-display" style="display: none;"></div>
-  <span class="sig-label">${preservePlaceholders(sigBlock.label || "Signature")}${sigBlock.required ? ' <span style="color:#ef4444;">*</span>' : ""}</span>
+  <span class="sig-label"${sigLabelStyle}>${preservePlaceholders(sigBlock.label || "Signature")}${sigBlock.required ? ' <span style="color:#ef4444;">*</span>' : ""}</span>
   <button type="button" data-signature-button data-field="${sigBlock.fieldName}" class="sign-button" aria-label="Sign: ${escapeHtml(sigBlock.label || "Signature")}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> Sign</button>
   <input type="hidden" name="${sigBlock.fieldName}" value="" data-signature-value${sigBlock.required ? ' aria-required="true"' : ""} />
 </div>`;
@@ -170,7 +176,9 @@ function renderBlockHTML(block: EditorBlock): string {
         tableBlock.columnWidths && tableBlock.columnWidths.length === colCount
           ? tableBlock.columnWidths
           : Array(colCount).fill(100 / colCount);
-      let tableHtml = `<table ${commonAttrs} data-header-row="${tableBlock.headerRow}" data-rows="${escapeHtml(JSON.stringify(rows))}" data-column-widths="${escapeHtml(JSON.stringify(colWidths))}" data-row-heights="${escapeHtml(JSON.stringify(tableBlock.rowHeights || []))}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="width: 100%; border-collapse: collapse; table-layout: fixed; ${margin}">\n`;
+      const colAlignments: string[] = (tableBlock as any).columnAlignments || [];
+      const stripedRows: boolean = !!(tableBlock as any).stripedRows;
+      let tableHtml = `<table ${commonAttrs} data-header-row="${tableBlock.headerRow}" data-striped-rows="${stripedRows}" data-rows="${escapeHtml(JSON.stringify(rows))}" data-column-widths="${escapeHtml(JSON.stringify(colWidths))}" data-column-alignments="${escapeHtml(JSON.stringify(colAlignments))}" data-row-heights="${escapeHtml(JSON.stringify(tableBlock.rowHeights || []))}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="width: 100%; border-collapse: collapse; table-layout: fixed; ${visualStyles} ${margin}">\n`;
 
       tableHtml += "  <colgroup>\n";
       colWidths.forEach((w) => {
@@ -186,8 +194,9 @@ function renderBlockHTML(block: EditorBlock): string {
             ? " height: " + headerHeight + "px;"
             : "") +
           '">\n';
-        rows[0].forEach((cell) => {
-          tableHtml += `      <th style="padding: 8px; border: 1px solid #000; font-weight: bold; text-align: left; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces;">${preservePlaceholders(cell)}</th>\n`;
+        rows[0].forEach((cell, ci) => {
+          const align = colAlignments[ci] || "left";
+          tableHtml += `      <th style="padding: 8px; border: 1px solid #000; font-weight: bold; text-align: ${align}; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces;">${preservePlaceholders(cell)}</th>\n`;
         });
         tableHtml += "    </tr>\n  </thead>\n";
       }
@@ -197,15 +206,20 @@ function renderBlockHTML(block: EditorBlock): string {
         const actualRowIdx = rowIdx + (tableBlock.headerRow ? 1 : 0);
         const bodyRowHeight = tableBlock.rowHeights?.[actualRowIdx];
         const rowStyles: string[] = [];
-        if (rowIdx % 2 === 1)
+        if (stripedRows) {
+          if (rowIdx % 2 === 0)
+            rowStyles.push("background-color: rgba(59,130,246,0.06)");
+        } else if (rowIdx % 2 === 1) {
           rowStyles.push("background-color: rgba(0,0,0,0.02)");
+        }
         if (bodyRowHeight && bodyRowHeight > 0)
           rowStyles.push("height: " + bodyRowHeight + "px");
         const bgColor =
           rowStyles.length > 0 ? ' style="' + rowStyles.join("; ") + ';"' : "";
         tableHtml += `    <tr${bgColor}>\n`;
-        row.forEach((cell) => {
-          tableHtml += `      <td style="padding: 8px; border: 1px solid #000; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces;">${preservePlaceholders(cell)}</td>\n`;
+        row.forEach((cell, ci) => {
+          const align = colAlignments[ci] || "left";
+          tableHtml += `      <td style="padding: 8px; border: 1px solid #000; text-align: ${align}; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces;">${preservePlaceholders(cell)}</td>\n`;
         });
         tableHtml += "    </tr>\n";
       });
@@ -221,7 +235,7 @@ function renderBlockHTML(block: EditorBlock): string {
           ? "list-style-type: decimal;"
           : "list-style-type: disc;";
 
-      let listHtml = `<${tag} ${commonAttrs} data-list-type="${listBlock.listType}" data-items="${escapeHtml(JSON.stringify(listBlock.items || []))}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${listStyle} margin-left: 24px; ${margin}">\n`;
+      let listHtml = `<${tag} ${commonAttrs} data-list-type="${listBlock.listType}" data-items="${escapeHtml(JSON.stringify(listBlock.items || []))}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${listStyle} margin-left: 24px; ${visualStyles} ${margin}">\n`;
       (listBlock.items || []).forEach((item) => {
         listHtml += `  <li style="padding: 4px 0;">${preservePlaceholders(item)}</li>\n`;
       });
@@ -239,7 +253,7 @@ function renderBlockHTML(block: EditorBlock): string {
       };
       const btnId = btnBlock.buttonType === "submit" ? 'id="form-submit"' : "";
 
-      return `<button ${commonAttrs} ${btnId} data-label="${escapeHtml(btnBlock.label)}" data-button-type="${btnBlock.buttonType}" data-variant="${btnBlock.variant}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" type="${btnBlock.buttonType}" style="padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; ${variantStyles[btnBlock.variant] || variantStyles.primary} ${margin}">${escapeHtml(btnBlock.label)}</button>`;
+      return `<div ${commonAttrs} data-label="${escapeHtml(btnBlock.label)}" data-button-type="${btnBlock.buttonType}" data-variant="${btnBlock.variant}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${visualStyles} ${margin}"><button ${btnId} type="${btnBlock.buttonType}" style="padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; ${variantStyles[btnBlock.variant] || variantStyles.primary}">${escapeHtml(btnBlock.label)}</button></div>`;
     }
 
     default:

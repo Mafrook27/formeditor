@@ -197,7 +197,7 @@ export const SectionContainer = memo(function SectionContainer({
           transitionProperty: "background-color, border-color",
           transitionDuration: "var(--transition-fast)",
         }}
-        onClick={() => selectSection(section.id)}
+        onClick={(e) => { e.stopPropagation(); selectSection(section.id); }}
       >
         <div className="flex items-center gap-2">
           {/* Section drag handle */}
@@ -270,6 +270,7 @@ export const SectionContainer = memo(function SectionContainer({
           color: sectionTextColor,
         }}
         onClick={(e) => {
+          e.stopPropagation();
           if (e.target === e.currentTarget) {
             selectSection(section.id);
           }

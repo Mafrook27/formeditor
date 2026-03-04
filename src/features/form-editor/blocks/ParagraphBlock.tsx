@@ -196,7 +196,7 @@ export const ParagraphBlock = memo(function ParagraphBlock({
     fontWeight: block.fontWeight,
     textAlign: block.textAlign as React.CSSProperties["textAlign"],
     lineHeight: block.lineHeight,
-    color: block.color || "inherit",
+    color: (block as any).textColor || block.color || "inherit",
     fontFamily: block.fontFamily || undefined,
     outline: "none",
     cursor: isPreview ? "default" : "text",

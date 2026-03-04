@@ -202,7 +202,7 @@ export const HeadingBlock = memo(function HeadingBlock({
     fontWeight: block.fontWeight,
     textAlign: block.textAlign as React.CSSProperties["textAlign"],
     lineHeight: block.lineHeight,
-    color: block.color || "inherit",
+    color: (block as any).textColor || block.color || "inherit",
     fontFamily: block.fontFamily || "'Open Sans', Arial, Helvetica, sans-serif",
     outline: "none",
     cursor: isPreview ? "default" : "text",
