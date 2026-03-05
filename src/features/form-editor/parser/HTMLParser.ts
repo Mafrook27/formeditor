@@ -461,10 +461,10 @@ function parseExternalHTML(
     }
   }
 
-  const result =
+  const result: EditorSection[] =
     sections.length > 0
       ? sections
-      : [{ id: uuidv4(), columns: 1, blocks: [[]] }];
+      : [{ id: uuidv4(), columns: 1 as const, blocks: [[]] }];
   return normalizeImportedSections(result);
 }
 
