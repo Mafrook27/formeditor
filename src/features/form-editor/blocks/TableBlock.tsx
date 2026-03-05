@@ -1,4 +1,4 @@
-import React, { memo, useState, useRef, useEffect, useCallback } from "react";
+import React, { memo, useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useEditor } from "../EditorContext";
 import { Button } from "@/components/ui/button";
 import { Plus, Minus, X, Copy } from "lucide-react";
@@ -27,12 +27,10 @@ const CellContent = memo(function CellContent({
 
   if (containsPlaceholders(content)) {
     const parts = content.split(/(PH@[\w]+|@[\w]+)/g);
-    let charOffset = 0;
+    const segments = parts.map((part, idx) => ({ part, key: `${idx}` }));
     return (
       <>
-        {parts.map((part) => {
-          const key = `${charOffset}`;
-          charOffset += part.length || 1;
+        {segments.map(({ part, key }) => {
           if (part.match(/^(PH@[\w]+|@[\w]+)$/)) {
             return (
               <span
@@ -94,10 +92,14 @@ export const TableBlock = memo(function TableBlock({
   const [resizingCol, setResizingCol] = useState<number | null>(null);
   const [resizingRow, setResizingRow] = useState<number | null>(null);
 
-  const rows = block.rows || [
-    ["Header 1", "Header 2", "Header 3"],
-    ["Cell 1", "Cell 2", "Cell 3"],
-  ];
+  const rows = useMemo(
+    () =>
+      block.rows || [
+        ["Header 1", "Header 2", "Header 3"],
+        ["Cell 1", "Cell 2", "Cell 3"],
+      ],
+    [block.rows],
+  );
 
   const colWidths = getColumnWidths(block);
   const rowHeights = getRowHeights(block);
@@ -121,24 +123,11 @@ export const TableBlock = memo(function TableBlock({
     startHeight: number;
   } | null>(null);
 
-  const rowIdCounter = useRef(0);
-  const rowIds = useRef<string[]>([]);
-  while (rowIds.current.length < rows.length) {
-    rowIds.current.push(`r${rowIdCounter.current++}`);
-  }
-  if (rowIds.current.length > rows.length) {
-    rowIds.current.length = rows.length;
-  }
-
-  const colIdCounter = useRef(0);
-  const colIds = useRef<string[]>([]);
-  const colCount = rows[0]?.length || 0;
-  while (colIds.current.length < colCount) {
-    colIds.current.push(`c${colIdCounter.current++}`);
-  }
-  if (colIds.current.length > colCount) {
-    colIds.current.length = colCount;
-  }
+  const rowIds = useMemo(() => rows.map((_, idx) => `r-${idx}`), [rows]);
+  const colIds = useMemo(
+    () => (rows[0] ? rows[0].map((_, idx) => `c-${idx}`) : []),
+    [rows],
+  );
 
   const handlePlaceholderInsert = useCallback(
     (placeholder: string, position: number) => {
@@ -243,10 +232,15 @@ export const TableBlock = memo(function TableBlock({
   };
 
   const localWidthsRef = useRef(localWidths);
-  localWidthsRef.current = localWidths;
-
   const localRowHeightsRef = useRef(localRowHeights);
-  localRowHeightsRef.current = localRowHeights;
+
+  useEffect(() => {
+    localWidthsRef.current = localWidths;
+  }, [localWidths]);
+
+  useEffect(() => {
+    localRowHeightsRef.current = localRowHeights;
+  }, [localRowHeights]);
 
   const handleColResizeStart = useCallback(
     (colIdx: number, e: React.MouseEvent) => {
@@ -374,7 +368,6 @@ export const TableBlock = memo(function TableBlock({
 
   const removeRow = (idx: number) => {
     if (rows.length <= 1) return;
-    rowIds.current.splice(idx, 1);
     const newRows = rows.filter((_, i) => i !== idx);
     const newHeights = block.rowHeights
       ? block.rowHeights.filter((_, i) => i !== idx)
@@ -404,7 +397,6 @@ export const TableBlock = memo(function TableBlock({
 
   const removeColumn = (colIdx: number) => {
     if ((rows[0]?.length || 0) <= 1) return;
-    colIds.current.splice(colIdx, 1);
     const newRows = rows.map((row) => row.filter((_, ci) => ci !== colIdx));
     const newWidths = colWidths.filter((_, ci) => ci !== colIdx);
     const total = newWidths.reduce((s, w) => s + w, 0);
@@ -433,7 +425,6 @@ export const TableBlock = memo(function TableBlock({
           ...block.rowHeights.slice(idx + 1),
         ]
       : undefined;
-    rowIds.current.splice(idx + 1, 0, `r${rowIdCounter.current++}`);
     updateBlockWithHistory(block.id, {
       rows: newRows,
       ...(newHeights ? { rowHeights: newHeights } : {}),
@@ -548,8 +539,8 @@ export const TableBlock = memo(function TableBlock({
               const isHov = hoveredCol === ci;
               const canDelete = (rows[0]?.length || 0) > 1;
               return (
-                <div
-                  key={colIds.current[ci] || ci}
+                  <div
+                    key={colIds[ci] ?? `c-${ci}`}
                   style={{
                     flex: `0 0 ${w}%`,
                     minWidth: 0,
@@ -626,7 +617,7 @@ export const TableBlock = memo(function TableBlock({
           >
             <colgroup>
               {activeWidths.map((w, i) => (
-                <col key={colIds.current[i] || i} style={{ width: `${w}%` }} />
+                <col key={colIds[i] ?? `c-${i}`} style={{ width: `${w}%` }} />
               ))}
             </colgroup>
             {rows.map((row, rowIdx) => {
@@ -637,7 +628,7 @@ export const TableBlock = memo(function TableBlock({
               const canResizeRow = isEditable && rowIdx < rows.length - 1;
 
               return (
-                <Wrapper key={rowIds.current[rowIdx]}>
+                <Wrapper key={rowIds[rowIdx]}>
                   <tr
                     className={isHeader ? "bg-muted/50" : ""}
                     style={{
@@ -660,7 +651,7 @@ export const TableBlock = memo(function TableBlock({
                       const Tag = isHeader ? "th" : "td";
                       return (
                         <Tag
-                          key={colIds.current[ci]}
+                          key={colIds[ci] ?? `c-${ci}`}
                           className={`border border-border p-2 ${isHeader ? "font-semibold text-left" : ""} ${isCellEditing ? "p-0" : ""} ${editorStyles.canvasCell}`}
                           onClick={() => handleCellClick(rowIdx, ci)}
                           onMouseEnter={() => {
@@ -729,7 +720,7 @@ export const TableBlock = memo(function TableBlock({
               const rh = activeRowHeights[rowIdx];
               return (
                 <div
-                  key={rowIds.current[rowIdx]}
+                  key={rowIds[rowIdx]}
                   className={`flex items-start justify-center gap-0.5 border-b border-border ${isHeader ? "bg-muted/50" : ""}`}
                   style={{ minHeight: rh && rh > 0 ? rh : 36 }}
                 >

@@ -27,12 +27,10 @@ const ParagraphContent = memo(function ParagraphContent({
 
   if (containsPlaceholders(content)) {
     const parts = content.split(/(PH@[\w]+|@[\w]+)/g);
-    let charOffset = 0;
+    const segments = parts.map((part, idx) => ({ part, key: `${idx}` }));
     return (
       <>
-        {parts.map((part) => {
-          const key = `${charOffset}`;
-          charOffset += part.length || 1;
+        {segments.map(({ part, key }) => {
           if (part.match(/^(PH@[\w]+|@[\w]+)$/)) {
             return (
               <span

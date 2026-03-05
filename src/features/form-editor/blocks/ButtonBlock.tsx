@@ -1,6 +1,5 @@
 import React, { memo } from "react";
 import { useEditor } from "../EditorContext";
-import { Button } from "@/components/ui/button";
 import type { ButtonBlockProps } from "../editorConfig";
 
 export const ButtonBlock = memo(function ButtonBlock({

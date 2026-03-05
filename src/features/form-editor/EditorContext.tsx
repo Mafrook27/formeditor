@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, {
   createContext,
   useContext,
@@ -143,7 +144,10 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       dispatch({ type: ACTIONS.PUSH_HISTORY });
     }
   }, []);
-  pushHistoryRef.current = pushHistory;
+
+  useEffect(() => {
+    pushHistoryRef.current = pushHistory;
+  }, [pushHistory]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -253,7 +257,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [state.isPreviewMode, state.selectedBlockId]);
+  }, [state.isPreviewMode, state.selectedBlockId, state.sections]);
 
   // Auto-save sections to localStorage on every change (debounced 1s)
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

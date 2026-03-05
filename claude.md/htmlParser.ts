@@ -343,6 +343,9 @@ function parseInputElement(
   // text, email, tel, number, password, url → TextInputBlock
   const validTypes = ['text', 'email', 'tel', 'number', 'password', 'url'];
   const inputType = validTypes.includes(type) ? type : 'text';
+  if (!validTypes.includes(type)) {
+    warnings.push(`Unsupported <input type="${type}"> parsed as text input.`);
+  }
 
   return {
     ...BASE_DEFAULTS, ...styles, id: uuid(), type: 'text-input',

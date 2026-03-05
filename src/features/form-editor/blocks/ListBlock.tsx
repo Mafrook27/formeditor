@@ -1,7 +1,7 @@
-import React, { memo, useState, useRef, useEffect, useCallback } from "react";
+import React, { memo, useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useEditor } from "../EditorContext";
 import { Button } from "@/components/ui/button";
-import { Plus, X, GripVertical } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import {
   PlaceholderDropdown,
   usePlaceholderTrigger,
@@ -19,16 +19,10 @@ export const ListBlock = memo(function ListBlock({
   const isPreview = state.isPreviewMode;
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const nextKeyId = useRef(0);
-  const itemKeysRef = useRef<string[]>([]);
-
-  // Safety check: ensure items exists
-  const items = block.items || ["Item 1", "Item 2"];
-
-  while (itemKeysRef.current.length < items.length) {
-    itemKeysRef.current.push(String(nextKeyId.current++));
-  }
-  itemKeysRef.current.length = items.length;
+  const items = useMemo(
+    () => block.items || ["Item 1", "Item 2"],
+    [block.items],
+  );
 
   // Auto-resize textarea to fit content
   const autoResizeTextarea = useCallback(
@@ -49,10 +43,13 @@ export const ListBlock = memo(function ListBlock({
     }
   }, [editingIndex, autoResizeTextarea]);
 
-  const updateItem = (idx: number, value: string) => {
-    const newItems = items.map((item, i) => (i === idx ? value : item));
-    updateBlockWithHistory(block.id, { items: newItems });
-  };
+  const updateItem = useCallback(
+    (idx: number, value: string) => {
+      const newItems = items.map((item, i) => (i === idx ? value : item));
+      updateBlockWithHistory(block.id, { items: newItems });
+    },
+    [block.id, items, updateBlockWithHistory],
+  );
 
   const handlePlaceholderInsert = useCallback(
     (placeholder: string, position: number) => {
@@ -110,7 +107,6 @@ export const ListBlock = memo(function ListBlock({
     if (items.length <= 1) return;
     const newItems = items.filter((_, i) => i !== idx);
     updateBlockWithHistory(block.id, { items: newItems });
-    itemKeysRef.current.splice(idx, 1);
     if (editingIndex === idx) setEditingIndex(null);
   };
 
@@ -163,7 +159,7 @@ export const ListBlock = memo(function ListBlock({
       >
         {items.map((item, idx) => (
           <li
-            key={itemKeysRef.current[idx]}
+            key={`${block.id}-${idx}`}
             className={`text-sm ${editorStyles.canvasCell}`}
             style={{ minWidth: 0 }}
           >

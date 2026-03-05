@@ -274,6 +274,7 @@ export function SliderWithInput({
 // ============================================================
 // src/shared/components/InspectorSection.tsx
 // ============================================================
+/* eslint-disable react-refresh/only-export-components */
 import { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/shared/utils/cn';

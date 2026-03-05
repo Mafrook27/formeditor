@@ -528,6 +528,7 @@ interface UsePlaceholderTriggerOptions {
   onInsert: (placeholder: string, cursorPosition: number) => void;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function usePlaceholderTrigger(options: UsePlaceholderTriggerOptions) {
   const [isOpen, setIsOpen] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
@@ -745,6 +746,7 @@ export function usePlaceholderTrigger(options: UsePlaceholderTriggerOptions) {
   };
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function insertPlaceholderIntoText(
   text: string,
   placeholder: string,

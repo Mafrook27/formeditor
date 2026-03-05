@@ -664,7 +664,7 @@ function parseNode(node: Node, context: BlockParseContext): EditorBlock[] {
       return parseContainerElement(element, context);
 
     case "table":
-      return [parseTableElement(element, context)];
+      return [parseTableElement(element)];
 
     case "ul":
     case "ol":
@@ -1166,10 +1166,7 @@ function extractCellText(cell: Element): string {
     .trim();
 }
 
-function parseTableElement(
-  element: HTMLElement,
-  _context: BlockParseContext,
-): EditorBlock {
+function parseTableElement(element: HTMLElement): EditorBlock {
   const rows: string[][] = [];
   let hasHeaderRow = false;
   let maxCols = 0;
@@ -1177,7 +1174,7 @@ function parseTableElement(
   // Track rowspan: map of colIndex → remaining rows it spans
   const rowspanTracker: Map<number, number> = new Map();
 
-  function processRow(tr: Element, isFirstRow: boolean): string[] {
+  function processRow(tr: Element): string[] {
     const cells: string[] = [];
     let colCursor = 0;
 
@@ -1220,10 +1217,8 @@ function parseTableElement(
   const thead = element.querySelector(":scope > thead");
   if (thead) {
     hasHeaderRow = true;
-    let firstTr = true;
     thead.querySelectorAll(":scope > tr").forEach((tr) => {
-      const cells = processRow(tr, firstTr);
-      firstTr = false;
+      const cells = processRow(tr);
       if (cells.length > 0) {
         rows.push(cells);
         maxCols = Math.max(maxCols, cells.length);
@@ -1233,13 +1228,11 @@ function parseTableElement(
 
   const tbody = element.querySelector(":scope > tbody");
   const rowContainer = tbody || element;
-  let firstBodyRow = true;
   rowContainer.querySelectorAll(":scope > tr").forEach((tr, rowIdx) => {
     if (thead && tr.closest("thead")) return;
     if (rowIdx === 0 && !hasHeaderRow && tr.querySelector(":scope > th"))
       hasHeaderRow = true;
-    const cells = processRow(tr, firstBodyRow && rows.length === 0);
-    firstBodyRow = false;
+    const cells = processRow(tr);
     if (cells.length > 0) {
       rows.push(cells);
       maxCols = Math.max(maxCols, cells.length);
@@ -1247,11 +1240,9 @@ function parseTableElement(
   });
 
   if (!tbody && !thead && rows.length === 0) {
-    let firstTr = true;
     element.querySelectorAll(":scope > tr").forEach((tr, rowIdx) => {
       if (rowIdx === 0 && tr.querySelector(":scope > th")) hasHeaderRow = true;
-      const cells = processRow(tr, firstTr);
-      firstTr = false;
+      const cells = processRow(tr);
       if (cells.length > 0) {
         rows.push(cells);
         maxCols = Math.max(maxCols, cells.length);

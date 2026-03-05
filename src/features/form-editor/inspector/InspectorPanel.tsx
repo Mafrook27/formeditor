@@ -1074,7 +1074,7 @@ const TableContentSection = memo(function TableContentSection({
       setEditingCellContent(firstRow[0] || "");
       setSelectedCell({ row: 0, col: 0 });
     }
-  }, [block.id]);
+  }, [b.rows, block.id]);
 
   const updateCellContent = (content: string) => {
     if (!selectedCell || !b.rows) return;
@@ -1318,15 +1318,18 @@ const ListContentSection = memo(function ListContentSection({
       setEditingItemContent(b.items[0] || "");
       setSelectedItemIndex(0);
     }
-  }, [block.id]);
+  }, [b.items, block.id]);
 
-  const updateItemContent = (content: string) => {
-    if (!b.items) return;
-    const newItems = b.items.map((item: string, i: number) =>
-      i === selectedItemIndex ? content : item,
-    );
-    onUpdate({ items: newItems } as any);
-  };
+  const updateItemContent = React.useCallback(
+    (content: string) => {
+      if (!b.items) return;
+      const newItems = b.items.map((item: string, i: number) =>
+        i === selectedItemIndex ? content : item,
+      );
+      onUpdate({ items: newItems } as any);
+    },
+    [b.items, onUpdate, selectedItemIndex],
+  );
 
   const handleListItemPlaceholderInsert = React.useCallback(
     (placeholder: string, position: number) => {

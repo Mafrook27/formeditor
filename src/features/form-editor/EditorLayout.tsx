@@ -9,8 +9,6 @@ import {
   DragOverlay,
   type DragEndEvent,
   type DragStartEvent,
-  type DragCancelEvent,
-  type DragOverEvent,
   pointerWithin,
   rectIntersection,
 } from "@dnd-kit/core";
@@ -43,10 +41,8 @@ export function EditorLayout() {
     setDragging,
     selectBlock,
     addSection,
-    findBlock,
   } = useEditor();
   const { sections, isPreviewMode, zoom } = state;
-  const [activeId, setActiveId] = useState<string | null>(null);
   const [activeBlock, setActiveBlock] = useState<EditorBlock | null>(null);
   const [activeSectionCols, setActiveSectionCols] = useState<1 | 2 | 3 | null>(
     null,
@@ -69,7 +65,6 @@ export function EditorLayout() {
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {
       setDragging(true);
-      setActiveId(event.active.id as string);
 
       // Store the active block data for DragOverlay
       const activeData = event.active.data.current;
@@ -85,20 +80,17 @@ export function EditorLayout() {
     [setDragging],
   );
 
-  const handleDragCancel = useCallback(
-    (_event: DragCancelEvent) => {
-      setDragging(false);
-      setActiveId(null);
-      setActiveBlock(null);
-      setActiveSectionCols(null);
-    },
+  const handleDragCancel = useCallback(() => {
+    setDragging(false);
+    setActiveBlock(null);
+    setActiveSectionCols(null);
+  },
     [setDragging],
   );
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       setDragging(false);
-      setActiveId(null);
       setActiveBlock(null);
       setActiveSectionCols(null);
 
@@ -231,6 +223,7 @@ export function EditorLayout() {
       reorderBlocks,
       reorderSections,
       setDragging,
+      addSection,
     ],
   );
 

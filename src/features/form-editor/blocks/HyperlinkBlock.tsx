@@ -27,6 +27,19 @@ export const HyperlinkBlock = memo(function HyperlinkBlock({
     textAlign: block.textAlign as React.CSSProperties["textAlign"],
   };
 
+  // Set text content imperatively when entering edit mode — no React children inside contentEditable
+  useEffect(() => {
+    if (isPreview || !isEditing || !textRef.current) return;
+    textRef.current.textContent = block.text || "Click here";
+    textRef.current.focus();
+    const range = document.createRange();
+    const sel = window.getSelection();
+    range.selectNodeContents(textRef.current);
+    range.collapse(false);
+    sel?.removeAllRanges();
+    sel?.addRange(range);
+  }, [block.text, isEditing, isPreview]);
+
   if (isPreview) {
     return (
       <div style={containerStyle}>
@@ -42,21 +55,6 @@ export const HyperlinkBlock = memo(function HyperlinkBlock({
       </div>
     );
   }
-
-  // Set text content imperatively when entering edit mode — no React children inside contentEditable
-  useEffect(() => {
-    if (isEditing && textRef.current) {
-      textRef.current.textContent = block.text || "Click here";
-      textRef.current.focus();
-      const range = document.createRange();
-      const sel = window.getSelection();
-      range.selectNodeContents(textRef.current);
-      range.collapse(false);
-      sel?.removeAllRanges();
-      sel?.addRange(range);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEditing]);
 
   return (
     <div style={containerStyle}>

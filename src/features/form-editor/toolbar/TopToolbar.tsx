@@ -127,8 +127,8 @@ export function TopToolbar({
 
         toast.success("Import Successful", {
           description: parsed.isEditorGenerated
-            ? `Imported  (layout preserved)`
-            : `Imported from external HTML`,
+            ? `Imported ${sectionCount} sections / ${blockCount} blocks (layout preserved)`
+            : `Imported ${sectionCount} sections / ${blockCount} blocks from HTML`,
           duration: 4000,
         });
 
@@ -196,13 +196,6 @@ export function TopToolbar({
           simple: mockSimpleFormHTML,
           rich: mockRichTextHTML,
           loan: mockLoanAgreementHTML,
-        };
-
-        const templateNames = {
-          agreement: "Financial Agreement",
-          simple: "Simple Contact Form",
-          rich: "Rich Text Content",
-          loan: "FinTech Loan Agreement",
         };
 
         importHTML(templates[type]);

@@ -7,15 +7,12 @@ import {
   type ButtonBlockProps,
   type SignatureBlockProps,
   type RawHTMLBlockProps,
-  type HeadingBlockProps,
-  type ParagraphBlockProps,
 } from "../editorConfig";
 import {
   EDITOR_VERSION,
   EDITOR_VERSION_ATTR,
   EDITOR_SECTION_ATTR,
   EDITOR_COLUMN_ATTR,
-  EDITOR_BLOCK_TYPE_ATTR,
   EDITOR_LAYOUT_ATTR,
 } from "../parser/HTMLParser";
 
@@ -304,7 +301,6 @@ ${blocks.map((b) => "    " + renderBlockHTML(b)).join("\n")}
 </div>`;
   }
 
-  const colWidth = `${100 / section.columns}%`;
   const columns = section.blocks.map(
     (col, idx) =>
       `  <div ${EDITOR_COLUMN_ATTR}="${idx}" style="box-sizing: border-box;">
