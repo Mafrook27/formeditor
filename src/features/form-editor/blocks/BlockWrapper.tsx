@@ -5,12 +5,14 @@ import { useEditor } from "../EditorContext";
 import type { EditorBlock } from "../editorConfig";
 import { GripVertical, Copy, Trash2, Lock, Unlock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
+import editorStyles from "../editor.module.css";
 
 interface BlockWrapperProps {
   block: EditorBlock;
@@ -105,16 +107,22 @@ export const BlockWrapper = memo(function BlockWrapper({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative rounded-sm border-2 ${
-        isSelected
-          ? "block-selected border-primary"
-          : isHovered
-            ? "block-hover border-primary/30"
-            : "border-dashed border-gray-300/40"
-      } ${isDragging ? "z-50" : ""}`}
+      className={cn(
+        "group relative rounded-md border transition-[border-color,background-color,box-shadow] duration-200",
+        isSelected && ["border-solid", editorStyles.blockSelected],
+        isHovered && !isSelected && [
+          "border-solid shadow-sm",
+          editorStyles.blockHover,
+        ],
+        !isSelected &&
+          !isHovered &&
+          "border-dashed border-slate-300/40 hover:border-slate-400/60",
+        isDragging && ["z-50", editorStyles.dragOverlay],
+      )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       role="button"
+      aria-selected={isSelected}
       tabIndex={0}
       onClick={(e) => {
         e.stopPropagation();
@@ -138,20 +146,19 @@ export const BlockWrapper = memo(function BlockWrapper({
         }
       }}
     >
-      {/* Drag handle */}
+      {/* Enhanced drag handle with better positioning */}
       {(isHovered || isSelected) && !block.locked && (
         <div
-          className="absolute -left-8 top-0 flex flex-col items-center gap-0.5 opacity-0 group-hover:opacity-100"
-          style={{
-            transitionProperty: "opacity",
-            transitionDuration: "var(--transition-fast)",
-          }}
+          className="absolute -left-10 top-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all duration-200"
         >
           <TooltipProvider delayDuration={300}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  className="p-0.5 rounded-sm hover:bg-secondary cursor-grab active:cursor-grabbing text-editor-handle hover:text-foreground"
+                  className={cn(
+                    "cursor-grab rounded-md p-1.5 text-editor-handle transition-all duration-150 hover:bg-secondary/80 hover:text-foreground active:cursor-grabbing",
+                    editorStyles.hoverLift,
+                  )}
                   {...attributes}
                   {...listeners}
                 >
@@ -166,16 +173,24 @@ export const BlockWrapper = memo(function BlockWrapper({
         </div>
       )}
 
-      {/* Selected actions bar */}
+      {/* Enhanced selected actions bar with better styling */}
       {isSelected && (
-        <div className="absolute -top-8 right-0 flex items-center gap-1 bg-card border border-border rounded-md shadow-sm px-1 py-0.5 animate-fade-in z-10">
+        <div
+          className={cn(
+            "absolute -top-11 right-2 z-20 flex items-center gap-1.5 rounded-md border border-editor-border/80 bg-background/95 px-2 py-1.5 shadow-[0_14px_30px_-22px_rgba(15,23,42,0.45)] backdrop-blur-sm",
+            editorStyles.fadeIn,
+          )}
+        >
+          <span className="rounded-sm bg-secondary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            Selected
+          </span>
           <TooltipProvider delayDuration={200}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6"
+                  className="h-7 w-7 rounded-md hover:bg-secondary/80 transition-colors duration-150"
                   onClick={(e) => {
                     e.stopPropagation();
                     duplicateBlock(block.id);
@@ -184,28 +199,28 @@ export const BlockWrapper = memo(function BlockWrapper({
                   <Copy className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent className="text-xs">Duplicate</TooltipContent>
+              <TooltipContent className="text-xs">Duplicate block</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6"
+                  className="h-7 w-7 rounded-md hover:bg-secondary/80 transition-colors duration-150"
                   onClick={(e) => {
                     e.stopPropagation();
                     updateBlockWithHistory(block.id, { locked: !block.locked });
                   }}
                 >
                   {block.locked ? (
-                    <Lock className="h-3.5 w-3.5" />
+                    <Lock className="h-3.5 w-3.5 text-amber-600" />
                   ) : (
                     <Unlock className="h-3.5 w-3.5" />
                   )}
                 </Button>
               </TooltipTrigger>
               <TooltipContent className="text-xs">
-                {block.locked ? "Unlock" : "Lock"}
+                {block.locked ? "Unlock block" : "Lock block"}
               </TooltipContent>
             </Tooltip>
             <Tooltip>
@@ -213,7 +228,7 @@ export const BlockWrapper = memo(function BlockWrapper({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 text-destructive hover:text-destructive"
+                  className="h-7 w-7 rounded-md text-destructive hover:text-destructive hover:bg-destructive/10 transition-colors duration-150"
                   onClick={(e) => {
                     e.stopPropagation();
                     removeBlock(block.id);
@@ -222,16 +237,21 @@ export const BlockWrapper = memo(function BlockWrapper({
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent className="text-xs">Delete</TooltipContent>
+              <TooltipContent className="text-xs">Delete block</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
       )}
 
-      {/* Lock indicator */}
+      {/* Enhanced lock indicator */}
       {block.locked && (
-        <div className="absolute -right-2 -top-2 bg-warning rounded-full p-0.5 shadow-sm z-10">
-          <Lock className="h-3 w-3 text-warning-foreground" />
+        <div
+          className={cn(
+            "absolute -right-2 -top-2 z-10 rounded-full border border-amber-300 bg-amber-100 p-1 shadow-sm",
+            editorStyles.fadeIn,
+          )}
+        >
+          <Lock className="h-3 w-3 text-amber-700" />
         </div>
       )}
 

@@ -6,12 +6,11 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { BlockWrapper } from "../blocks/BlockWrapper";
-import { BlockRenderer } from "../blocks/BlockRenderer";
+import { cn } from "@/lib/utils";
+import { BlockWrapper, BlockRenderer } from "../blocks";
 import { useEditor } from "../EditorContext";
 import type { EditorSection, EditorBlock } from "../editorConfig";
 import {
-  Plus,
   Trash2,
   Columns2,
   Columns3,
@@ -25,8 +24,9 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
-import { ConfirmDialog } from "../components/ConfirmDialog";
+import { ConfirmDialog } from "../components";
 import { toast } from "sonner";
+import editorStyles from "../editor.module.css";
 
 interface SectionColumnProps {
   section: EditorSection;
@@ -41,7 +41,6 @@ const SectionColumn = memo(function SectionColumn({
 }: SectionColumnProps) {
   const { state } = useEditor();
   const isPreview = state.isPreviewMode;
-  const isCanvasDragging = state.isDragging;
   const droppableId = `${section.id}:${columnIndex}`;
 
   const { setNodeRef, isOver } = useDroppable({
@@ -60,22 +59,22 @@ const SectionColumn = memo(function SectionColumn({
     >
       <div
         ref={setNodeRef}
-        className={`relative min-h-[48px] p-2 rounded-sm ${
-          isOver && !isPreview ? "dropzone-indicator" : ""
-        } ${!isPreview && blocks.length === 0 ? "border border-dashed border-editor-border/50" : ""}`}
-        style={{
-          transitionProperty: "background-color, border-color",
-          transitionDuration: "var(--transition-fast)",
-        }}
-      >
-        {!isPreview && isCanvasDragging && (
-          <div className="absolute top-1 left-2 text-[10px] text-muted-foreground bg-card/80 px-1 py-0.5 rounded pointer-events-none">
-            Column {columnIndex + 1}
-          </div>
+        className={cn(
+          "relative min-h-[48px] rounded-lg p-3 transition-all duration-200",
+          isOver && !isPreview && editorStyles.dropzoneIndicator,
+          !isPreview &&
+            blocks.length === 0 &&
+            "border-2 border-dashed border-editor-border/50 hover:border-editor-border/80 hover:bg-editor-hover/30",
         )}
+      >
         {blocks.length === 0 && !isPreview && (
-          <div className="flex items-center justify-center h-12 text-xs text-muted-foreground">
-            Drop blocks here
+          <div className="flex flex-col items-center justify-center h-16 text-center">
+            <div className="text-xs text-muted-foreground font-medium mb-1">
+              Drop blocks here
+            </div>
+            <div className="text-xs text-muted-foreground/70">
+              Drag from library or move existing blocks
+            </div>
           </div>
         )}
         {blocks.map((block) => (
@@ -104,7 +103,6 @@ export const SectionContainer = memo(function SectionContainer({
 }: SectionContainerProps) {
   const { state, removeSection, selectSection, addSection } = useEditor();
   const isPreview = state.isPreviewMode;
-  const isCanvasDragging = state.isDragging;
   const isSelected = state.selectedSectionId === section.id;
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
   const sectionPaddingTop = section.paddingTop ?? 12;
@@ -186,51 +184,51 @@ export const SectionContainer = memo(function SectionContainer({
       style={{ ...sortableStyle, marginBottom: `${sectionSpacing}px` }}
       className="group/section relative"
     >
-      {/* Section header */}
+      {/* Enhanced section header */}
       <div
-        className={`flex items-center justify-between px-3 py-1.5 rounded-t-md border border-b-0 cursor-pointer ${
+        className={`flex items-center justify-between px-4 py-2.5 rounded-t-lg border border-b-0 cursor-pointer transition-all duration-200 ${
           isSelected
-            ? "bg-editor-selected-bg border-editor-selected/30"
-            : "bg-muted/30 border-editor-border/50 hover:bg-muted/50"
+            ? "bg-editor-selected-bg border-editor-selected/40 shadow-sm"
+            : "bg-muted/20 border-editor-border/50 hover:bg-muted/40 hover:border-editor-border/80"
         }`}
-        style={{
-          transitionProperty: "background-color, border-color",
-          transitionDuration: "var(--transition-fast)",
-        }}
         onClick={(e) => { e.stopPropagation(); selectSection(section.id); }}
       >
-        <div className="flex items-center gap-2">
-          {/* Section drag handle */}
+        <div className="flex items-center gap-3">
+          {/* Enhanced section drag handle */}
           <button
-            className="p-0.5 rounded-sm hover:bg-secondary cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground opacity-0 group-hover/section:opacity-100"
-            style={{
-              transitionProperty: "opacity, background-color, color",
-              transitionDuration: "var(--transition-fast)",
-            }}
+            className={cn(
+              "cursor-grab rounded-md p-1 text-muted-foreground opacity-0 transition-all duration-200 hover:bg-secondary/80 hover:text-foreground group-hover/section:opacity-100 active:cursor-grabbing",
+              editorStyles.hoverLift,
+            )}
             title="Drag to reorder section"
             onClick={(e) => e.stopPropagation()}
             {...attributes}
             {...listeners}
           >
-            <GripVertical className="h-3.5 w-3.5" />
+            <GripVertical className="h-4 w-4" />
           </button>
-          <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-xs font-medium text-muted-foreground">
-            Section · {section.columns}{" "}
-            {section.columns === 1 ? "Column" : "Columns"}
-          </span>
-          {!isPreview && (
-            <span className={`text-[10px] text-muted-foreground ${isCanvasDragging ? "" : "opacity-70"}`}>
-              Drag & drop blocks into columns
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-secondary to-secondary/80 flex items-center justify-center">
+              <LayoutGrid className="h-4 w-4 text-secondary-foreground" />
+            </div>
+            <div>
+              <span className="text-sm font-medium text-foreground">
+                Section
+              </span>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span>{section.columns} {section.columns === 1 ? "Column" : "Columns"}</span>
+                {hasBlocks && (
+                  <>
+                    <span>•</span>
+                    <span>{(section.blocks ?? []).reduce((sum, col) => sum + col.length, 0)} blocks</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
         <div
-          className="flex items-center gap-1 opacity-0 group-hover/section:opacity-100"
-          style={{
-            transitionProperty: "opacity",
-            transitionDuration: "var(--transition-fast)",
-          }}
+          className="flex items-center gap-1 opacity-0 group-hover/section:opacity-100 transition-opacity duration-200"
         >
           <TooltipProvider delayDuration={200}>
             <Tooltip>
@@ -238,27 +236,27 @@ export const SectionContainer = memo(function SectionContainer({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 text-destructive hover:text-destructive"
+                  className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10 transition-colors"
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowDeleteConfirm(true);
                   }}
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent className="text-xs">
-                Remove section
+                Delete section
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
       </div>
 
-      {/* Grid */}
+      {/* Enhanced Grid */}
       <div
-        className={`grid ${gridCols[section.columns] || "grid-cols-1"} border rounded-b-md ${
-          isSelected ? "border-editor-selected/30" : "border-editor-border/50"
+        className={`grid ${gridCols[section.columns] || "grid-cols-1"} border rounded-b-lg transition-all duration-200 ${
+          isSelected ? "border-editor-selected/40 shadow-sm" : "border-editor-border/50 hover:border-editor-border/80"
         }`}
         style={{
           gap: `${sectionColumnGap}px`,
@@ -286,60 +284,50 @@ export const SectionContainer = memo(function SectionContainer({
         ))}
       </div>
 
-      {/* Add section between */}
+      {/* Enhanced add section between with better styling */}
       <div
-        className="flex items-center justify-center py-1 opacity-0 group-hover/section:opacity-100"
-        style={{
-          transitionProperty: "opacity",
-          transitionDuration: "var(--transition-fast)",
-        }}
+        className="flex items-center justify-center py-2 opacity-0 group-hover/section:opacity-100 transition-opacity duration-200"
       >
-        <div className="flex items-center gap-1 bg-card border border-border rounded-full px-2 py-0.5 shadow-sm">
+        <div
+          className={cn(
+            "flex items-center gap-2 rounded-full border border-border bg-card/95 px-3 py-2 shadow-sm backdrop-blur-sm",
+            editorStyles.hoverLift,
+          )}
+        >
+          <span className="text-xs text-muted-foreground font-medium">Add section:</span>
           <TooltipProvider delayDuration={200}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  className="p-1 rounded-full hover:bg-secondary text-muted-foreground hover:text-foreground"
-                  style={{
-                    transitionProperty: "background-color, color",
-                    transitionDuration: "var(--transition-fast)",
-                  }}
+                  className="p-1.5 rounded-full hover:bg-secondary/80 text-muted-foreground hover:text-foreground transition-all duration-150"
                   onClick={() => addSection(1, index + 1)}
                 >
-                  <Plus className="h-3 w-3" />
+                  <LayoutGrid className="h-3.5 w-3.5" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent className="text-xs">1 Column</TooltipContent>
+              <TooltipContent className="text-xs">Single Column</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  className="p-1 rounded-full hover:bg-secondary text-muted-foreground hover:text-foreground"
-                  style={{
-                    transitionProperty: "background-color, color",
-                    transitionDuration: "var(--transition-fast)",
-                  }}
+                  className="p-1.5 rounded-full hover:bg-secondary/80 text-muted-foreground hover:text-foreground transition-all duration-150"
                   onClick={() => addSection(2, index + 1)}
                 >
-                  <Columns2 className="h-3 w-3" />
+                  <Columns2 className="h-3.5 w-3.5" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent className="text-xs">2 Columns</TooltipContent>
+              <TooltipContent className="text-xs">Two Columns</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  className="p-1 rounded-full hover:bg-secondary text-muted-foreground hover:text-foreground"
-                  style={{
-                    transitionProperty: "background-color, color",
-                    transitionDuration: "var(--transition-fast)",
-                  }}
+                  className="p-1.5 rounded-full hover:bg-secondary/80 text-muted-foreground hover:text-foreground transition-all duration-150"
                   onClick={() => addSection(3, index + 1)}
                 >
-                  <Columns3 className="h-3 w-3" />
+                  <Columns3 className="h-3.5 w-3.5" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent className="text-xs">3 Columns</TooltipContent>
+              <TooltipContent className="text-xs">Three Columns</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>

@@ -1,10 +1,11 @@
-import React, { memo } from "react";
+import React, { memo, useState } from "react";
 import { useEditor } from "../EditorContext";
 import {
   BLOCK_TYPES,
   type EditorBlock,
   type EditorSection,
 } from "../editorConfig";
+import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +28,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/shared/components/ui/collapsible";
+import {
   Trash2,
   Copy,
   Lock,
@@ -37,6 +43,12 @@ import {
   AlignJustify,
   Plus,
   X,
+  ChevronDown,
+  ChevronRight,
+  Palette,
+  Layout,
+  Type,
+  Settings,
 } from "lucide-react";
 import {
   ColorPicker,
@@ -50,11 +62,58 @@ import {
   PlaceholderDropdown,
   usePlaceholderTrigger,
   insertPlaceholderIntoText,
-} from "../plugins/PlaceholderPlugin";
-import { ConfirmDialog } from "../components/ConfirmDialog";
+} from "../plugins";
+import { ConfirmDialog } from "../components";
 import { toast } from "sonner";
+import editorStyles from "../editor.module.css";
 
 type UpdateFn = (updates: Partial<EditorBlock>) => void;
+
+const CollapsibleSection = memo(function CollapsibleSection({
+  title,
+  icon: Icon,
+  children,
+  defaultOpen = true,
+  hasChanges = false,
+}: {
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+  hasChanges?: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <Collapsible
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      className="rounded-lg border border-editor-border/70 bg-background/90 shadow-[0_12px_32px_-28px_rgba(15,23,42,0.4)] backdrop-blur-sm"
+    >
+      <CollapsibleTrigger asChild>
+        <button className="flex w-full items-center justify-between rounded-lg px-4 py-3.5 text-left hover:bg-white transition-colors duration-150 group">
+          <div className="flex items-center gap-2">
+            <Icon className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+            <span className="text-sm font-semibold text-foreground">{title}</span>
+            {hasChanges && (
+              <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            )}
+          </div>
+          {isOpen ? (
+            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform" />
+          ) : (
+            <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform" />
+          )}
+        </button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="border-t border-editor-border/60 px-4 pb-4">
+        <div className="space-y-4 pt-4">
+          {children}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+});
 
 const TypographySection = memo(function TypographySection({
   block,
@@ -73,90 +132,107 @@ const TypographySection = memo(function TypographySection({
   if (!isTextBlock) return null;
   const b = block as any;
 
+  const hasTypographyChanges = b.fontSize !== 14 || b.fontWeight !== 400 || b.textAlign !== "left" || b.lineHeight !== 1.6 || b.color;
+
   return (
-    <div className="space-y-4">
-      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-        Typography
-      </h4>
+    <CollapsibleSection 
+      title="Typography" 
+      icon={Type} 
+      hasChanges={hasTypographyChanges}
+    >
       {block.type === BLOCK_TYPES.HEADING && (
         <div className="space-y-1.5">
-          <Label className="text-xs">Level</Label>
+          <Label className="text-xs font-medium">Heading Level</Label>
           <Select
             value={b.level || "h1"}
             onValueChange={(v) => onUpdate({ level: v } as any)}
           >
-            <SelectTrigger className="h-8 text-xs">
+            <SelectTrigger className="h-9 text-xs">
               <SelectValue placeholder="Select level" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="h1">H1</SelectItem>
-              <SelectItem value="h2">H2</SelectItem>
-              <SelectItem value="h3">H3</SelectItem>
-              <SelectItem value="h4">H4</SelectItem>
+              <SelectItem value="h1">H1 - Main Title</SelectItem>
+              <SelectItem value="h2">H2 - Section</SelectItem>
+              <SelectItem value="h3">H3 - Subsection</SelectItem>
+              <SelectItem value="h4">H4 - Minor Heading</SelectItem>
             </SelectContent>
           </Select>
         </div>
       )}
+      
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label className="text-xs">Font Size</Label>
-          <Input
-            type="number"
-            value={b.fontSize}
-            onChange={(e) =>
-              onUpdate({ fontSize: parseInt(e.target.value) || 14 } as any)
-            }
-            className="h-8 text-xs"
-            min={10}
-            max={72}
-          />
+          <Label className="text-xs font-medium">Font Size</Label>
+          <div className="relative">
+            <Input
+              type="number"
+              value={b.fontSize}
+              onChange={(e) =>
+                onUpdate({ fontSize: parseInt(e.target.value) || 14 } as any)
+              }
+              className="h-9 text-xs pr-8"
+              min={10}
+              max={72}
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+              px
+            </span>
+          </div>
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs">Font Weight</Label>
+          <Label className="text-xs font-medium">Font Weight</Label>
           <Select
             value={String(b.fontWeight)}
             onValueChange={(v) => onUpdate({ fontWeight: parseInt(v) } as any)}
           >
-            <SelectTrigger className="h-8 text-xs">
+            <SelectTrigger className="h-9 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="300">Light</SelectItem>
-              <SelectItem value="400">Regular</SelectItem>
-              <SelectItem value="500">Medium</SelectItem>
-              <SelectItem value="600">Semibold</SelectItem>
-              <SelectItem value="700">Bold</SelectItem>
+              <SelectItem value="300">Light (300)</SelectItem>
+              <SelectItem value="400">Regular (400)</SelectItem>
+              <SelectItem value="500">Medium (500)</SelectItem>
+              <SelectItem value="600">Semibold (600)</SelectItem>
+              <SelectItem value="700">Bold (700)</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
+      
       <div className="space-y-1.5">
-        <Label className="text-xs">Alignment</Label>
-        <div className="flex items-center gap-1 bg-secondary rounded-md p-0.5">
+        <Label className="text-xs font-medium">Text Alignment</Label>
+        <div className="flex items-center gap-1 bg-secondary/30 rounded-lg p-1">
           {(
             [
-              { v: "left", I: AlignLeft },
-              { v: "center", I: AlignCenter },
-              { v: "right", I: AlignRight },
-              { v: "justify", I: AlignJustify },
+              { v: "left", I: AlignLeft, label: "Left" },
+              { v: "center", I: AlignCenter, label: "Center" },
+              { v: "right", I: AlignRight, label: "Right" },
+              { v: "justify", I: AlignJustify, label: "Justify" },
             ] as const
-          ).map(({ v, I: Icon }) => (
+          ).map(({ v, I: Icon, label }) => (
             <button
               key={v}
-              className={`flex-1 flex items-center justify-center h-7 rounded-sm text-xs ${b.textAlign === v ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-              style={{
-                transitionProperty: "background-color, color, box-shadow",
-                transitionDuration: "var(--transition-fast)",
-              }}
+              title={label}
+              className={`flex-1 flex items-center justify-center h-8 rounded-md text-xs transition-all duration-150 ${
+                b.textAlign === v 
+                  ? "bg-card shadow-sm text-foreground border border-border" 
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+              }`}
               onClick={() => onUpdate({ textAlign: v } as any)}
             >
-              <Icon className="h-3.5 w-3.5" />
+              <Icon className="h-4 w-4" />
             </button>
           ))}
         </div>
       </div>
-      <div className="space-y-1.5">
-        <Label className="text-xs">Line Height: {b.lineHeight}</Label>
+      
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label className="text-xs font-medium">Line Height</Label>
+          <span className="text-xs text-muted-foreground font-mono">
+            {b.lineHeight}
+          </span>
+        </div>
         <Slider
           value={[b.lineHeight * 10]}
           onValueChange={([v]) => onUpdate({ lineHeight: v / 10 } as any)}
@@ -165,19 +241,26 @@ const TypographySection = memo(function TypographySection({
           step={1}
           className="py-1"
         />
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>Tight</span>
+          <span>Normal</span>
+          <span>Loose</span>
+        </div>
       </div>
+      
       <div className="space-y-1.5">
-        <Label className="text-xs">Text Color</Label>
+        <Label className="text-xs font-medium">Text Color</Label>
         <Popover>
           <PopoverTrigger asChild>
-            <button className="h-8 w-full rounded-md border border-input bg-background px-3 text-xs flex items-center justify-between hover:bg-accent hover:text-accent-foreground">
+            <button className="h-9 w-full rounded-lg border border-input bg-background px-3 text-xs flex items-center justify-between hover:bg-accent hover:text-accent-foreground transition-colors">
               <span className="flex items-center gap-2">
                 <div
-                  className="h-4 w-4 rounded border border-input"
+                  className="h-4 w-4 rounded border border-input shadow-sm"
                   style={{ backgroundColor: b.color || "#1e293b" }}
                 />
-                <span>{b.color || "inherit"}</span>
+                <span>{b.color || "Default"}</span>
               </span>
+              <Palette className="h-3.5 w-3.5 text-muted-foreground" />
             </button>
           </PopoverTrigger>
           <PopoverContent className="w-64 p-3" align="start">
@@ -196,7 +279,7 @@ const TypographySection = memo(function TypographySection({
           </PopoverContent>
         </Popover>
       </div>
-    </div>
+    </CollapsibleSection>
   );
 });
 
@@ -207,13 +290,22 @@ const LayoutSection = memo(function LayoutSection({
   block: EditorBlock;
   onUpdate: UpdateFn;
 }) {
+  const hasLayoutChanges = block.width !== 100 || block.marginTop !== 0 || block.marginBottom !== 8 || 
+    block.marginLeft !== 0 || block.marginRight !== 0 || block.paddingX !== 0 || block.paddingY !== 0;
+
   return (
-    <div className="space-y-4">
-      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-        Layout
-      </h4>
-      <div className="space-y-1.5">
-        <Label className="text-xs">Width: {block.width}%</Label>
+    <CollapsibleSection 
+      title="Layout & Spacing" 
+      icon={Layout} 
+      hasChanges={hasLayoutChanges}
+    >
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label className="text-xs font-medium">Width</Label>
+          <span className="text-xs text-muted-foreground font-mono">
+            {block.width}%
+          </span>
+        </div>
         <Slider
           value={[block.width]}
           onValueChange={([v]) => onUpdate({ width: v })}
@@ -222,108 +314,150 @@ const LayoutSection = memo(function LayoutSection({
           step={5}
           className="py-1"
         />
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>25%</span>
+          <span>50%</span>
+          <span>75%</span>
+          <span>100%</span>
+        </div>
       </div>
 
-      <Separator className="my-3" />
+      <Separator className="my-4" />
 
-      <div className="space-y-3">
-        <Label className="text-xs font-medium">Margin</Label>
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <div className="h-4 w-4 rounded border-2 border-dashed border-muted-foreground/50"></div>
+          <Label className="text-xs font-medium">Margin (Outside spacing)</Label>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Top</Label>
-            <Input
-              type="number"
-              value={block.marginTop || 0}
-              onChange={(e) =>
-                onUpdate({ marginTop: parseInt(e.target.value) || 0 })
-              }
-              className="h-8 text-xs"
-              min={0}
-              max={96}
-            />
+            <div className="relative">
+              <Input
+                type="number"
+                value={block.marginTop || 0}
+                onChange={(e) =>
+                  onUpdate({ marginTop: parseInt(e.target.value) || 0 })
+                }
+                className="h-9 text-xs pr-8"
+                min={0}
+                max={96}
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                px
+              </span>
+            </div>
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Bottom</Label>
-            <Input
-              type="number"
-              value={block.marginBottom || 0}
-              onChange={(e) =>
-                onUpdate({ marginBottom: parseInt(e.target.value) || 0 })
-              }
-              className="h-8 text-xs"
-              min={0}
-              max={96}
-            />
+            <div className="relative">
+              <Input
+                type="number"
+                value={block.marginBottom || 0}
+                onChange={(e) =>
+                  onUpdate({ marginBottom: parseInt(e.target.value) || 0 })
+                }
+                className="h-9 text-xs pr-8"
+                min={0}
+                max={96}
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                px
+              </span>
+            </div>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Left</Label>
-            <Input
-              type="number"
-              value={block.marginLeft || 0}
-              onChange={(e) =>
-                onUpdate({ marginLeft: parseInt(e.target.value) || 0 })
-              }
-              className="h-8 text-xs"
-              min={0}
-              max={96}
-            />
+            <div className="relative">
+              <Input
+                type="number"
+                value={block.marginLeft || 0}
+                onChange={(e) =>
+                  onUpdate({ marginLeft: parseInt(e.target.value) || 0 })
+                }
+                className="h-9 text-xs pr-8"
+                min={0}
+                max={96}
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                px
+              </span>
+            </div>
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Right</Label>
-            <Input
-              type="number"
-              value={block.marginRight || 0}
-              onChange={(e) =>
-                onUpdate({ marginRight: parseInt(e.target.value) || 0 })
-              }
-              className="h-8 text-xs"
-              min={0}
-              max={96}
-            />
+            <div className="relative">
+              <Input
+                type="number"
+                value={block.marginRight || 0}
+                onChange={(e) =>
+                  onUpdate({ marginRight: parseInt(e.target.value) || 0 })
+                }
+                className="h-9 text-xs pr-8"
+                min={0}
+                max={96}
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                px
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
-      <Separator className="my-3" />
+      <Separator className="my-4" />
 
-      <div className="space-y-3">
-        <Label className="text-xs font-medium">Padding</Label>
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <div className="h-4 w-4 rounded bg-muted-foreground/20 border border-muted-foreground/50"></div>
+          <Label className="text-xs font-medium">Padding (Inside spacing)</Label>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">
               Horizontal (X)
             </Label>
-            <Input
-              type="number"
-              value={block.paddingX || 0}
-              onChange={(e) =>
-                onUpdate({ paddingX: parseInt(e.target.value) || 0 })
-              }
-              className="h-8 text-xs"
-              min={0}
-              max={64}
-            />
+            <div className="relative">
+              <Input
+                type="number"
+                value={block.paddingX || 0}
+                onChange={(e) =>
+                  onUpdate({ paddingX: parseInt(e.target.value) || 0 })
+                }
+                className="h-9 text-xs pr-8"
+                min={0}
+                max={64}
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                px
+              </span>
+            </div>
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">
               Vertical (Y)
             </Label>
-            <Input
-              type="number"
-              value={block.paddingY || 0}
-              onChange={(e) =>
-                onUpdate({ paddingY: parseInt(e.target.value) || 0 })
-              }
-              className="h-8 text-xs"
-              min={0}
-              max={64}
-            />
+            <div className="relative">
+              <Input
+                type="number"
+                value={block.paddingY || 0}
+                onChange={(e) =>
+                  onUpdate({ paddingY: parseInt(e.target.value) || 0 })
+                }
+                className="h-9 text-xs pr-8"
+                min={0}
+                max={64}
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                px
+              </span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </CollapsibleSection>
   );
 });
 
@@ -396,19 +530,23 @@ const VisualSection = memo(function VisualSection({
   onUpdate: UpdateFn;
 }) {
   const b = block as any;
+  const hasVisualChanges = b.backgroundColor || b.textColor || b.fontFamily || 
+    b.blockBorderWidth || b.blockBorderColor || b.blockBorderStyle !== "none" || b.blockBorderRadius;
+
   return (
-    <div className="space-y-4">
-      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-        Visual
-      </h4>
+    <CollapsibleSection 
+      title="Visual Style" 
+      icon={Palette} 
+      hasChanges={hasVisualChanges}
+    >
       <div className="space-y-1.5">
-        <Label className="text-xs">Background Color</Label>
+        <Label className="text-xs font-medium">Background Color</Label>
         <Popover>
           <PopoverTrigger asChild>
-            <button className="h-8 w-full rounded-md border border-input bg-background px-3 text-xs flex items-center justify-between hover:bg-accent hover:text-accent-foreground">
+            <button className="h-9 w-full rounded-lg border border-input bg-background px-3 text-xs flex items-center justify-between hover:bg-accent hover:text-accent-foreground transition-colors">
               <span className="flex items-center gap-2">
                 <div
-                  className="h-4 w-4 rounded border border-input"
+                  className="h-4 w-4 rounded border border-input shadow-sm"
                   style={{
                     backgroundColor: b.backgroundColor || "transparent",
                   }}
@@ -416,15 +554,15 @@ const VisualSection = memo(function VisualSection({
                 <span>{b.backgroundColor || "None"}</span>
               </span>
               {b.backgroundColor && (
-                <span
-                  className="text-muted-foreground hover:text-foreground ml-2 cursor-pointer"
+                <button
+                  className="text-muted-foreground hover:text-foreground ml-2 p-0.5 rounded hover:bg-secondary/50 transition-colors"
                   onClick={(e) => {
                     e.stopPropagation();
                     onUpdate({ backgroundColor: undefined } as any);
                   }}
                 >
-                  ×
-                </span>
+                  <X className="h-3 w-3" />
+                </button>
               )}
             </button>
           </PopoverTrigger>
@@ -444,28 +582,29 @@ const VisualSection = memo(function VisualSection({
           </PopoverContent>
         </Popover>
       </div>
+      
       <div className="space-y-1.5">
-        <Label className="text-xs">Text Color</Label>
+        <Label className="text-xs font-medium">Text Color Override</Label>
         <Popover>
           <PopoverTrigger asChild>
-            <button className="h-8 w-full rounded-md border border-input bg-background px-3 text-xs flex items-center justify-between hover:bg-accent hover:text-accent-foreground">
+            <button className="h-9 w-full rounded-lg border border-input bg-background px-3 text-xs flex items-center justify-between hover:bg-accent hover:text-accent-foreground transition-colors">
               <span className="flex items-center gap-2">
                 <div
-                  className="h-4 w-4 rounded border border-input"
+                  className="h-4 w-4 rounded border border-input shadow-sm"
                   style={{ backgroundColor: b.textColor || "transparent" }}
                 />
-                <span>{b.textColor || "inherit"}</span>
+                <span>{b.textColor || "Inherit"}</span>
               </span>
               {b.textColor && (
-                <span
-                  className="text-muted-foreground hover:text-foreground ml-2 cursor-pointer"
+                <button
+                  className="text-muted-foreground hover:text-foreground ml-2 p-0.5 rounded hover:bg-secondary/50 transition-colors"
                   onClick={(e) => {
                     e.stopPropagation();
                     onUpdate({ textColor: undefined } as any);
                   }}
                 >
-                  ×
-                </span>
+                  <X className="h-3 w-3" />
+                </button>
               )}
             </button>
           </PopoverTrigger>
@@ -485,19 +624,21 @@ const VisualSection = memo(function VisualSection({
           </PopoverContent>
         </Popover>
       </div>
+      
       <div className="space-y-1.5">
-        <Label className="text-xs">Font Family</Label>
+        <Label className="text-xs font-medium">Font Family</Label>
         <Select
           value={b.fontFamily || "__default"}
           onValueChange={(v) =>
             onUpdate({ fontFamily: v === "__default" ? undefined : v } as any)
           }
         >
-          <SelectTrigger className="h-8 text-xs">
+          <SelectTrigger className="h-9 text-xs">
             <SelectValue placeholder="Default" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="__default">Default</SelectItem>
+            <SelectItem value="__default">System Default</SelectItem>
+            <SelectItem value="'Inter', sans-serif">Inter</SelectItem>
             <SelectItem value="'Open Sans', sans-serif">Open Sans</SelectItem>
             <SelectItem value="'Arial', sans-serif">Arial</SelectItem>
             <SelectItem value="'Georgia', serif">Georgia</SelectItem>
@@ -511,69 +652,83 @@ const VisualSection = memo(function VisualSection({
           </SelectContent>
         </Select>
       </div>
-      <Separator className="my-3" />
-      <div className="space-y-3">
-        <Label className="text-xs font-medium">Border</Label>
+      
+      <Separator className="my-4" />
+      
+      <div className="space-y-4">
+        <Label className="text-xs font-medium">Border & Effects</Label>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Width (px)</Label>
-            <Input
-              type="number"
-              value={b.blockBorderWidth || 0}
-              onChange={(e) =>
-                onUpdate({
-                  blockBorderWidth: parseInt(e.target.value) || 0,
-                } as any)
-              }
-              className="h-8 text-xs"
-              min={0}
-              max={16}
-            />
+            <Label className="text-xs text-muted-foreground">Width</Label>
+            <div className="relative">
+              <Input
+                type="number"
+                value={b.blockBorderWidth || 0}
+                onChange={(e) =>
+                  onUpdate({
+                    blockBorderWidth: parseInt(e.target.value) || 0,
+                  } as any)
+                }
+                className="h-9 text-xs pr-8"
+                min={0}
+                max={16}
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                px
+              </span>
+            </div>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Radius (px)</Label>
-            <Input
-              type="number"
-              value={b.blockBorderRadius || 0}
-              onChange={(e) =>
-                onUpdate({
-                  blockBorderRadius: parseInt(e.target.value) || 0,
-                } as any)
-              }
-              className="h-8 text-xs"
-              min={0}
-              max={32}
-            />
+            <Label className="text-xs text-muted-foreground">Radius</Label>
+            <div className="relative">
+              <Input
+                type="number"
+                value={b.blockBorderRadius || 0}
+                onChange={(e) =>
+                  onUpdate({
+                    blockBorderRadius: parseInt(e.target.value) || 0,
+                  } as any)
+                }
+                className="h-9 text-xs pr-8"
+                min={0}
+                max={32}
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                px
+              </span>
+            </div>
           </div>
         </div>
+        
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Style</Label>
+          <Label className="text-xs text-muted-foreground">Border Style</Label>
           <Select
             value={b.blockBorderStyle || "solid"}
             onValueChange={(v) => onUpdate({ blockBorderStyle: v } as any)}
           >
-            <SelectTrigger className="h-8 text-xs">
+            <SelectTrigger className="h-9 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="solid">Solid</SelectItem>
-              <SelectItem value="dashed">Dashed</SelectItem>
-              <SelectItem value="dotted">Dotted</SelectItem>
-              <SelectItem value="none">None</SelectItem>
+              <SelectItem value="solid">Solid Line</SelectItem>
+              <SelectItem value="dashed">Dashed Line</SelectItem>
+              <SelectItem value="dotted">Dotted Line</SelectItem>
+              <SelectItem value="none">No Border</SelectItem>
             </SelectContent>
           </Select>
         </div>
+        
         <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground">Border Color</Label>
           <Popover>
             <PopoverTrigger asChild>
-              <button className="h-8 w-full rounded-md border border-input bg-background px-3 text-xs flex items-center justify-between hover:bg-accent hover:text-accent-foreground">
+              <button className="h-9 w-full rounded-lg border border-input bg-background px-3 text-xs flex items-center justify-between hover:bg-accent hover:text-accent-foreground transition-colors">
                 <span className="flex items-center gap-2">
                   <div
-                    className="h-4 w-4 rounded border border-input"
+                    className="h-4 w-4 rounded border border-input shadow-sm"
                     style={{ backgroundColor: b.blockBorderColor || "#e2e8f0" }}
                   />
-                  <span>{b.blockBorderColor || "#e2e8f0"}</span>
+                  <span>{b.blockBorderColor || "Default"}</span>
                 </span>
               </button>
             </PopoverTrigger>
@@ -596,7 +751,7 @@ const VisualSection = memo(function VisualSection({
           </Popover>
         </div>
       </div>
-    </div>
+    </CollapsibleSection>
   );
 });
 
@@ -619,7 +774,13 @@ const FieldSettingsSection = memo(function FieldSettingsSection({
       BLOCK_TYPES.SIGNATURE,
     ] as string[]
   ).includes(block.type);
+  
+  if (!isFormBlock) return null;
+  
   const b = block as any;
+  const hasFieldChanges = b.required || b.validationType !== "none" || b.maxLength || 
+    (b.options && b.options.length > 3) || b.layout !== "vertical";
+
   const labelInputRef = React.useRef<HTMLInputElement>(null);
   const handleLabelPlaceholderInsert = React.useCallback(
     (placeholder: string, position: number) => {
@@ -637,7 +798,6 @@ const FieldSettingsSection = memo(function FieldSettingsSection({
     onInsert: handleLabelPlaceholderInsert,
   });
 
-  if (!isFormBlock) return null;
   const hasOptions = (
     [
       BLOCK_TYPES.DROPDOWN,
@@ -673,12 +833,13 @@ const FieldSettingsSection = memo(function FieldSettingsSection({
   };
 
   return (
-    <div className="space-y-4">
-      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-        Field Settings
-      </h4>
+    <CollapsibleSection 
+      title="Field Settings" 
+      icon={Settings} 
+      hasChanges={hasFieldChanges}
+    >
       <div className="space-y-1.5">
-        <Label className="text-xs">Label</Label>
+        <Label className="text-xs font-medium">Field Label</Label>
         <Input
           ref={labelInputRef}
           value={b.label || ""}
@@ -687,125 +848,143 @@ const FieldSettingsSection = memo(function FieldSettingsSection({
             labelInputRef.current &&
             labelPlaceholderTrigger.handleKeyDown(e, labelInputRef.current)
           }
-          className="h-8 text-xs"
-          placeholder="Type @ for placeholders"
+          className="h-9 text-xs"
+          placeholder="Enter field label..."
         />
-        <p className="text-[11px] text-muted-foreground">
-          💡 Type @ to insert placeholders in label
+        <p className="text-xs text-muted-foreground">
+          💡 Type @ to insert dynamic placeholders
         </p>
       </div>
+      
       <div className="space-y-1.5">
-        <Label className="text-xs">Field Name</Label>
+        <Label className="text-xs font-medium">Field Name (for forms)</Label>
         <Input
           value={b.fieldName || ""}
           onChange={(e) => onUpdate({ fieldName: e.target.value } as any)}
-          className="h-8 text-xs font-mono"
+          className="h-9 text-xs font-mono"
+          placeholder="field_name"
         />
       </div>
+      
       {hasPlaceholder && (
         <div className="space-y-1.5">
-          <Label className="text-xs">Placeholder</Label>
+          <Label className="text-xs font-medium">Placeholder Text</Label>
           <Input
             value={b.placeholder || ""}
             onChange={(e) => onUpdate({ placeholder: e.target.value } as any)}
-            className="h-8 text-xs"
+            className="h-9 text-xs"
+            placeholder="Enter placeholder..."
           />
         </div>
       )}
-      <div className="flex items-center justify-between">
-        <Label className="text-xs">Required</Label>
+      
+      <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/20">
+        <div className="flex items-center gap-2">
+          <Label className="text-xs font-medium">Required Field</Label>
+          {b.required && (
+            <span className="text-xs text-destructive">*</span>
+          )}
+        </div>
         <Switch
           checked={b.required || false}
           onCheckedChange={(checked) => onUpdate({ required: checked } as any)}
         />
       </div>
+      
       {b.helpText !== undefined && (
         <div className="space-y-1.5">
-          <Label className="text-xs">Help Text</Label>
+          <Label className="text-xs font-medium">Help Text</Label>
           <Input
             value={b.helpText || ""}
             onChange={(e) => onUpdate({ helpText: e.target.value } as any)}
-            className="h-8 text-xs"
+            className="h-9 text-xs"
+            placeholder="Additional guidance for users..."
           />
         </div>
       )}
+      
       {hasValidation && (
         <div className="space-y-1.5">
-          <Label className="text-xs">Validation</Label>
+          <Label className="text-xs font-medium">Input Validation</Label>
           <Select
             value={b.validationType || "none"}
             onValueChange={(v) => onUpdate({ validationType: v } as any)}
           >
-            <SelectTrigger className="h-8 text-xs">
+            <SelectTrigger className="h-9 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">None</SelectItem>
-              <SelectItem value="email">Email</SelectItem>
-              <SelectItem value="number">Number</SelectItem>
-              <SelectItem value="phone">Phone</SelectItem>
+              <SelectItem value="none">No validation</SelectItem>
+              <SelectItem value="email">Email address</SelectItem>
+              <SelectItem value="number">Numbers only</SelectItem>
+              <SelectItem value="phone">Phone number</SelectItem>
             </SelectContent>
           </Select>
         </div>
       )}
+      
       {hasMaxLength && (
         <div className="space-y-1.5">
-          <Label className="text-xs">Max Length</Label>
+          <Label className="text-xs font-medium">Character Limit</Label>
           <Input
             type="number"
             value={b.maxLength || ""}
             onChange={(e) => onUpdate({ maxLength: e.target.value } as any)}
             placeholder="No limit"
-            className="h-8 text-xs"
+            className="h-9 text-xs"
+            min={1}
           />
         </div>
       )}
+      
       {hasRows && (
         <div className="space-y-1.5">
-          <Label className="text-xs">Rows</Label>
+          <Label className="text-xs font-medium">Text Area Rows</Label>
           <Input
             type="number"
             value={b.rows || 4}
             onChange={(e) =>
               onUpdate({ rows: parseInt(e.target.value) || 4 } as any)
             }
-            className="h-8 text-xs"
+            className="h-9 text-xs"
             min={2}
             max={20}
           />
         </div>
       )}
+      
       {hasLayout && (
         <div className="space-y-1.5">
-          <Label className="text-xs">Layout</Label>
+          <Label className="text-xs font-medium">Option Layout</Label>
           <Select
             value={b.layout || "vertical"}
             onValueChange={(v) => onUpdate({ layout: v } as any)}
           >
-            <SelectTrigger className="h-8 text-xs">
+            <SelectTrigger className="h-9 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="vertical">Vertical</SelectItem>
-              <SelectItem value="horizontal">Horizontal</SelectItem>
+              <SelectItem value="vertical">Vertical (stacked)</SelectItem>
+              <SelectItem value="horizontal">Horizontal (inline)</SelectItem>
             </SelectContent>
           </Select>
         </div>
       )}
+      
       {hasOptions && (
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <Label className="text-xs">Options</Label>
+            <Label className="text-xs font-medium">Options</Label>
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
-              className="h-6 text-xs gap-1"
+              className="h-7 text-xs gap-1 px-2"
               onClick={addOption}
             >
-              <Plus className="h-3 w-3" /> Add
+              <Plus className="h-3 w-3" /> Add Option
             </Button>
           </div>
-          <div className="space-y-1">
+          <div className="space-y-2">
             {(b.options || []).map((opt: string, i: number) => (
               <OptionItem
                 key={i}
@@ -817,11 +996,12 @@ const FieldSettingsSection = memo(function FieldSettingsSection({
               />
             ))}
           </div>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             💡 Type @ in options to insert placeholders
           </p>
         </div>
       )}
+      
       <PlaceholderDropdown
         isOpen={labelPlaceholderTrigger.isOpen}
         onClose={labelPlaceholderTrigger.close}
@@ -829,7 +1009,7 @@ const FieldSettingsSection = memo(function FieldSettingsSection({
         position={labelPlaceholderTrigger.position}
         searchTerm={labelPlaceholderTrigger.searchTerm}
       />
-    </div>
+    </CollapsibleSection>
   );
 });
 
@@ -1712,16 +1892,29 @@ export const InspectorPanel = memo(function InspectorPanel() {
 
   if (!block && !section) {
     return (
-      <div className="w-72 bg-editor-sidebar border-l border-editor-border flex flex-col h-full">
-        <div className="px-4 pt-4 pb-2">
-          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+      <div className="w-[25rem] min-w-[25rem] bg-editor-sidebar/95 border-l border-editor-border flex flex-col h-full shadow-[-12px_0_32px_-30px_rgba(15,23,42,0.3)] backdrop-blur-sm">
+        <div className="px-5 pt-5 pb-4 border-b border-editor-border/50">
+          <h2 className="text-sm font-semibold text-foreground">
             Inspector
           </h2>
-        </div>
-        <div className="flex-1 flex items-center justify-center px-6">
-          <p className="text-xs text-muted-foreground text-center leading-relaxed">
-            Select a block on the canvas to view and edit its properties.
+          <p className="text-xs text-muted-foreground mt-0.5">
+            No selection
           </p>
+        </div>
+        <div className="flex-1 flex items-center justify-center px-6 py-8">
+          <div className="w-full max-w-sm rounded-xl border border-editor-border/70 bg-background/90 px-6 py-8 text-center shadow-[0_18px_42px_-34px_rgba(15,23,42,0.4)]">
+            <div className="h-14 w-14 rounded-lg bg-gradient-to-br from-white to-secondary/80 border border-editor-border/70 flex items-center justify-center mx-auto shadow-sm">
+              <Settings className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <div className="mt-4">
+              <p className="text-sm font-semibold text-foreground mb-1">
+                Select a block to edit
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Click on any block in the canvas to view and modify its properties here.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -1732,30 +1925,30 @@ export const InspectorPanel = memo(function InspectorPanel() {
       updateSectionWithHistory(section.id, updates);
 
     return (
-      <div className="w-72 bg-editor-sidebar border-l border-editor-border flex flex-col h-full">
-        <div className="px-4 pt-4 pb-2">
-          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+      <div className="w-[25rem] min-w-[25rem] bg-editor-sidebar/95 border-l border-editor-border flex flex-col h-full shadow-[-12px_0_32px_-30px_rgba(15,23,42,0.3)] backdrop-blur-sm">
+        <div className="px-5 pt-5 pb-4 border-b border-editor-border/50">
+          <h2 className="text-sm font-semibold text-foreground">
             Inspector
           </h2>
-          <p className="text-[11px] text-muted-foreground mt-0.5">Section</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Section layout</p>
         </div>
-        <ScrollArea className="flex-1 editor-scrollbar">
+        <ScrollArea className={cn("flex-1", editorStyles.scrollArea)}>
           <Tabs defaultValue="layout" className="w-full">
-            <TabsList className="w-full justify-start rounded-none border-b border-editor-border bg-transparent px-4 h-9">
+            <TabsList className="mx-4 mt-4 grid h-auto grid-cols-2 rounded-lg border border-editor-border/70 bg-background/80 p-1 shadow-sm">
               <TabsTrigger
                 value="layout"
-                className="text-xs h-7 px-2.5 rounded-sm data-[state=active]:bg-secondary"
+                className="text-xs h-9 rounded-md data-[state=active]:bg-card data-[state=active]:shadow-sm"
               >
                 Layout
               </TabsTrigger>
               <TabsTrigger
                 value="style"
-                className="text-xs h-7 px-2.5 rounded-sm data-[state=active]:bg-secondary"
+                className="text-xs h-9 rounded-md data-[state=active]:bg-card data-[state=active]:shadow-sm"
               >
                 Style
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="layout" className="px-4 py-3 space-y-5">
+            <TabsContent value="layout" className="px-5 py-5 space-y-5">
               <div className="space-y-4">
                 <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Section Layout
@@ -1851,7 +2044,7 @@ export const InspectorPanel = memo(function InspectorPanel() {
                 </div>
               </div>
             </TabsContent>
-            <TabsContent value="style" className="px-4 py-3 space-y-5">
+            <TabsContent value="style" className="px-5 py-5 space-y-5">
               <div className="space-y-4">
                 <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Section Style
@@ -1967,13 +2160,13 @@ export const InspectorPanel = memo(function InspectorPanel() {
     .join(" ");
 
   return (
-    <div className="w-72 bg-editor-sidebar border-l border-editor-border flex flex-col h-full">
-      <div className="px-4 pt-4 pb-2 flex items-center justify-between">
+    <div className="w-[25rem] min-w-[25rem] bg-editor-sidebar/95 border-l border-editor-border flex flex-col h-full shadow-[-12px_0_32px_-30px_rgba(15,23,42,0.3)] backdrop-blur-sm">
+      <div className="px-5 pt-5 pb-4 flex items-center justify-between border-b border-editor-border/50">
         <div>
-          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          <h2 className="text-sm font-semibold text-foreground">
             Inspector
           </h2>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             {blockTypeLabel}
           </p>
         </div>
@@ -1981,19 +2174,21 @@ export const InspectorPanel = memo(function InspectorPanel() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7"
+            className="h-9 w-9 rounded-md hover:bg-secondary/80 transition-colors"
             onClick={handleDuplicate}
+            title="Duplicate block"
           >
             <Copy className="h-3.5 w-3.5" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7"
+            className="h-9 w-9 rounded-md hover:bg-secondary/80 transition-colors"
             onClick={() => onUpdate({ locked: !block.locked })}
+            title={block.locked ? "Unlock block" : "Lock block"}
           >
             {block.locked ? (
-              <Lock className="h-3.5 w-3.5" />
+              <Lock className="h-3.5 w-3.5 text-amber-600" />
             ) : (
               <Unlock className="h-3.5 w-3.5" />
             )}
@@ -2001,47 +2196,23 @@ export const InspectorPanel = memo(function InspectorPanel() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-destructive hover:text-destructive"
+            className="h-9 w-9 rounded-md text-destructive hover:text-destructive hover:bg-destructive/10 transition-colors"
             onClick={() => setShowDeleteConfirm(true)}
+            title="Delete block"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
         </div>
       </div>
-      <ScrollArea className="flex-1 editor-scrollbar">
-        <Tabs defaultValue="general" className="w-full">
-          <TabsList className="w-full justify-start rounded-none border-b border-editor-border bg-transparent px-4 h-9">
-            <TabsTrigger
-              value="general"
-              className="text-xs h-7 px-2.5 rounded-sm data-[state=active]:bg-secondary"
-            >
-              General
-            </TabsTrigger>
-            <TabsTrigger
-              value="layout"
-              className="text-xs h-7 px-2.5 rounded-sm data-[state=active]:bg-secondary"
-            >
-              Layout
-            </TabsTrigger>
-            <TabsTrigger
-              value="style"
-              className="text-xs h-7 px-2.5 rounded-sm data-[state=active]:bg-secondary"
-            >
-              Style
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="general" className="px-4 py-3 space-y-5">
-            <ContentSection block={block} onUpdate={onUpdate} />
-            <FieldSettingsSection block={block} onUpdate={onUpdate} />
-          </TabsContent>
-          <TabsContent value="layout" className="px-4 py-3 space-y-5">
-            <LayoutSection block={block} onUpdate={onUpdate} />
-          </TabsContent>
-          <TabsContent value="style" className="px-4 py-3 space-y-5">
-            <TypographySection block={block} onUpdate={onUpdate} />
-            <VisualSection block={block} onUpdate={onUpdate} />
-          </TabsContent>
-        </Tabs>
+      
+      <ScrollArea className={cn("flex-1", editorStyles.scrollArea)}>
+        <div className="p-4 space-y-3">
+          <ContentSection block={block} onUpdate={onUpdate} />
+          <FieldSettingsSection block={block} onUpdate={onUpdate} />
+          <LayoutSection block={block} onUpdate={onUpdate} />
+          <TypographySection block={block} onUpdate={onUpdate} />
+          <VisualSection block={block} onUpdate={onUpdate} />
+        </div>
       </ScrollArea>
 
       <ConfirmDialog

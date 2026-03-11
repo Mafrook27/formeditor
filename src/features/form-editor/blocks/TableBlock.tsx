@@ -7,7 +7,7 @@ import {
   PlaceholderDropdown,
   usePlaceholderTrigger,
   insertPlaceholderIntoText,
-} from "../plugins/PlaceholderPlugin";
+} from "../plugins";
 import type { TableBlockProps } from "../editorConfig";
 import editorStyles from "../editor.module.css";
 

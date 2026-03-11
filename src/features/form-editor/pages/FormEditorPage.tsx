@@ -1,8 +1,7 @@
 import React from "react";
-import { EditorProvider } from "@/form-editor/EditorContext";
-import { EditorLayout } from "@/form-editor/EditorLayout";
+import { EditorProvider, EditorLayout } from "..";
 import { Toaster } from "sonner";
-import { ErrorBoundary } from "@/form-editor/components/ErrorBoundary";
+import { ErrorBoundary } from "../components";
 
 export default function FormEditorPage() {
   return (

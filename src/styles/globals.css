@@ -140,13 +140,28 @@ body {
   --editor-sidebar: hsl(210 33% 98%);
   --editor-toolbar: hsl(0 0% 100%);
   --editor-border: hsl(214 32% 91%);
-  --editor-hover: hsl(222 47% 96%);
-  --editor-selected: hsl(222 47% 31%);
-  --editor-selected-bg: hsl(222 47% 96%);
+  --editor-hover: hsl(210 28% 96%);
+  --editor-selected: hsl(215 19% 28%);
+  --editor-selected-bg: hsl(210 38% 97%);
   --editor-dropzone: hsl(172 66% 92%);
   --editor-dropzone-active: hsl(172 66% 40%);
   --editor-handle: hsl(215 16% 67%);
   --editor-guide: hsl(222 47% 60%);
+
+  /* Enhanced visual feedback */
+  --editor-block-hover: hsl(210 33% 98%);
+  --editor-block-selected: hsl(215 18% 52%);
+  --editor-block-selected-bg: hsl(210 29% 97%);
+  --editor-dropzone-hover: hsl(172 66% 88%);
+  --editor-dropzone-pulse: hsl(172 66% 85%);
+  --editor-drag-shadow: 0 16px 40px -24px rgba(15, 23, 42, 0.35), 0 10px 18px -18px rgba(15, 23, 42, 0.28);
+  --editor-selection-glow: 0 18px 38px -28px rgba(15, 23, 42, 0.42), inset 0 0 0 1px rgba(255, 255, 255, 0.85);
+
+  /* Transition tokens */
+  --transition-fast: 150ms;
+  --transition-medium: 250ms;
+  --transition-slow: 350ms;
+  --transition-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   --sidebar-foreground: 0 0% 20%;
   --sidebar-primary: 221 83% 53%;
@@ -342,49 +357,69 @@ body {
     background: #9ca3af;
   }
 
-  /* ── Editor canvas: hidden scrollbar, appears on hover ── */
-  .editor-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: transparent transparent;
+  /* Enhanced button hover effects */
+  .hover-scale {
+    transition: transform var(--transition-fast) ease-out;
   }
 
-  .editor-scrollbar:hover {
-    scrollbar-color: rgba(0, 0, 0, 0.14) transparent;
+  .hover-scale:hover {
+    transform: scale(1.02);
   }
 
-  .editor-scrollbar::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+  /* Pulse animation for indicators */
+  .pulse-slow {
+    animation: pulse-slow 2s ease-in-out infinite;
   }
 
-  .editor-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
+  @keyframes pulse-slow {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
   }
 
-  .editor-scrollbar::-webkit-scrollbar-thumb {
-    background: transparent;
-    border-radius: 999px;
+  /* Enhanced focus styles */
+  .focus-ring {
+    transition: box-shadow var(--transition-fast) ease-out;
   }
 
-  .editor-scrollbar:hover::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.14);
+  .focus-ring:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--editor-selected), 0 0 0 4px hsla(222, 84%, 50%, 0.15);
   }
 
-  .editor-scrollbar:hover::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.28);
+  /* Smooth property transitions */
+  .property-transition {
+    transition: all var(--transition-medium) var(--transition-spring);
   }
 
-  /* Dark mode variant */
-  .dark .editor-scrollbar:hover {
-    scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+  /* Enhanced section transitions */
+  .section-transition {
+    transition: border-color var(--transition-medium) ease-out, 
+                background-color var(--transition-medium) ease-out,
+                box-shadow var(--transition-medium) ease-out;
   }
 
-  .dark .editor-scrollbar:hover::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.16);
+  /* Block selection glow effect */
+  .block-glow {
+    position: relative;
   }
 
-  .dark .editor-scrollbar:hover::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.28);
+  .block-glow::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    background: linear-gradient(45deg, var(--editor-selected), transparent, var(--editor-selected));
+    opacity: 0;
+    transition: opacity var(--transition-medium) ease-out;
+    z-index: -1;
+  }
+
+  .block-glow.selected::before {
+    opacity: 0.1;
   }
 }
 

@@ -17,19 +17,20 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { cn } from "@/lib/utils";
 import { useEditor } from "./EditorContext";
-import { TopToolbar } from "./toolbar/TopToolbar";
-import { BlockLibrary } from "./toolbar/BlockLibrary";
-import { InspectorPanel } from "./inspector/InspectorPanel";
-import { SectionContainer } from "./sections/SectionContainer";
-import { BlockRenderer } from "./blocks/BlockRenderer";
+import { TopToolbar, BlockLibrary } from "./toolbar";
+import { InspectorPanel } from "./inspector";
+import { SectionContainer } from "./sections";
+import { BlockRenderer } from "./blocks";
 import {
   getDefaultBlockProps,
   type BlockType,
   type EditorBlock,
 } from "./editorConfig";
-import { exportToHTML } from "./export/exportToHTML";
+import { exportToHTML } from "./export";
 import { Plus, Columns2, Columns3, LayoutGrid } from "lucide-react";
+import editorStyles from "./editor.module.css";
 
 export function EditorLayout() {
   const {
@@ -262,8 +263,12 @@ export function EditorLayout() {
 
           {/* Canvas */}
           <div
-            className="flex-1 overflow-auto editor-scrollbar bg-editor-bg"
+            className={cn(
+              "flex-1 overflow-auto bg-editor-bg",
+              editorStyles.scrollArea,
+            )}
             role="region"
+            aria-label="Form editor canvas"
             tabIndex={0}
             onClick={() => !isPreviewMode && selectBlock(null)}
             onKeyDown={(e) => {
@@ -276,9 +281,25 @@ export function EditorLayout() {
               ) {
                 return;
               }
+              
+              // Enhanced keyboard navigation
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
                 selectBlock(null);
+              }
+              
+              // Quick section creation shortcuts
+              if (e.key === "1" && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                addSection(1);
+              }
+              if (e.key === "2" && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                addSection(2);
+              }
+              if (e.key === "3" && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                addSection(3);
               }
             }}
           >
@@ -307,55 +328,58 @@ export function EditorLayout() {
             ) : (
               <div className="flex justify-center py-8 px-4">
                 <div
-                  className="w-full max-w-[800px] bg-editor-canvas rounded-lg canvas-page p-10"
+                  className={cn(
+                    "w-full max-w-[800px] rounded-lg bg-editor-canvas p-10",
+                    editorStyles.canvasPage,
+                  )}
                   style={{
                     transform: `scale(${canvasScale})`,
                     transformOrigin: "top center",
                   }}
                 >
                   {sections.length === 0 && !isPreviewMode && (
-                    <div className="flex flex-col items-center justify-center py-20 text-center">
-                      <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
-                        <LayoutGrid className="h-8 w-8 text-muted-foreground" />
+                    <div className="flex flex-col items-center justify-center py-24 text-center">
+                      <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mb-6 shadow-sm border border-primary/10">
+                        <LayoutGrid className="h-10 w-10 text-primary/60" />
                       </div>
-                      <h3 className="text-base font-heading font-semibold text-foreground mb-2">
+                      <h3 className="text-lg font-heading font-semibold text-foreground mb-3">
                         Start Building Your Form
                       </h3>
-                      <p className="text-sm text-muted-foreground mb-6 max-w-sm">
-                        Add a section from the left panel, then drag blocks into
-                        it to build your agreement form.
+                      <p className="text-sm text-muted-foreground mb-8 max-w-md leading-relaxed">
+                        Create professional agreement forms by adding sections and dragging blocks from the library. 
+                        Choose your layout and customize every detail.
                       </p>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-3">
                         <button
                           onClick={() => addSection(1)}
-                          className="flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:opacity-90"
-                          style={{
-                            transitionProperty: "opacity",
-                            transitionDuration: "var(--transition-fast)",
-                          }}
+                          className={cn(
+                            "flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90",
+                            editorStyles.hoverLift,
+                          )}
                         >
-                          <Plus className="h-3.5 w-3.5" /> 1 Column
+                          <LayoutGrid className="h-4 w-4" /> Single Column
                         </button>
                         <button
                           onClick={() => addSection(2)}
-                          className="flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                          style={{
-                            transitionProperty: "background-color",
-                            transitionDuration: "var(--transition-fast)",
-                          }}
+                          className={cn(
+                            "flex items-center gap-2 rounded-lg bg-secondary px-4 py-2.5 text-sm font-medium text-secondary-foreground shadow-sm transition-all duration-200 hover:bg-secondary/80",
+                            editorStyles.hoverLift,
+                          )}
                         >
-                          <Columns2 className="h-3.5 w-3.5" /> 2 Columns
+                          <Columns2 className="h-4 w-4" /> Two Columns
                         </button>
                         <button
                           onClick={() => addSection(3)}
-                          className="flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                          style={{
-                            transitionProperty: "background-color",
-                            transitionDuration: "var(--transition-fast)",
-                          }}
+                          className={cn(
+                            "flex items-center gap-2 rounded-lg bg-secondary px-4 py-2.5 text-sm font-medium text-secondary-foreground shadow-sm transition-all duration-200 hover:bg-secondary/80",
+                            editorStyles.hoverLift,
+                          )}
                         >
-                          <Columns3 className="h-3.5 w-3.5" /> 3 Columns
+                          <Columns3 className="h-4 w-4" /> Three Columns
                         </button>
+                      </div>
+                      <div className="mt-6 text-xs text-muted-foreground">
+                        💡 Tip: You can also drag layout sections from the left panel
                       </div>
                     </div>
                   )}
@@ -379,19 +403,29 @@ export function EditorLayout() {
 
           {!isPreviewMode && <InspectorPanel />}
 
-          {/* DragOverlay for smooth dragging experience */}
+          {/* Enhanced DragOverlay for smooth dragging experience */}
           <DragOverlay
             dropAnimation={{
-              duration: 200,
+              duration: 300,
               easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)",
             }}
           >
             {activeBlock ? (
-              <div className="opacity-80 shadow-2xl rounded-md bg-card border-2 border-primary">
+              <div
+                className={cn(
+                  "rounded-lg border-2 border-primary/50 bg-card opacity-90 shadow-2xl backdrop-blur-sm",
+                  editorStyles.dragOverlay,
+                )}
+              >
                 <BlockRenderer block={activeBlock} />
               </div>
             ) : activeSectionCols ? (
-              <div className="opacity-80 shadow-2xl rounded-md bg-card border-2 border-primary p-3 w-[260px]">
+              <div
+                className={cn(
+                  "w-[280px] rounded-lg border-2 border-primary/50 bg-card p-4 opacity-90 shadow-2xl backdrop-blur-sm",
+                  editorStyles.dragOverlay,
+                )}
+              >
                 <div
                   className={`grid ${
                     activeSectionCols === 1
@@ -399,17 +433,19 @@ export function EditorLayout() {
                       : activeSectionCols === 2
                         ? "grid-cols-2"
                         : "grid-cols-3"
-                  } gap-2`}
+                  } gap-3`}
                 >
                   {Array.from({ length: activeSectionCols }).map((_, idx) => (
                     <div
                       key={idx}
-                      className="h-12 rounded border border-dashed border-primary/50 bg-primary/5"
-                    />
+                      className="h-14 rounded-md border-2 border-dashed border-primary/40 bg-primary/5 flex items-center justify-center"
+                    >
+                      <div className="w-8 h-1 bg-primary/30 rounded-full"></div>
+                    </div>
                   ))}
                 </div>
-                <div className="mt-2 text-[10px] text-muted-foreground text-center">
-                  New Section · {activeSectionCols} Columns
+                <div className="mt-3 text-xs text-muted-foreground text-center font-medium">
+                  New Section · {activeSectionCols} Column{activeSectionCols > 1 ? 's' : ''}
                 </div>
               </div>
             ) : null}

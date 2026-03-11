@@ -5,7 +5,7 @@ import { NotFoundPage } from "./pages/NotFoundPage";
 // Feature routes
 import { authRoutes } from "@/features/auth/routes";
 import { dashboardRoutes } from "@/features/dashboard/routes";
-import { formEditorRoutes } from "@/features/form-editor/routes";
+import { formEditorRoutes } from "@/features/form-editor";
 
 const router = createBrowserRouter([
   // Auth routes (login)

@@ -20,3 +20,123 @@
   word-break: break-word;
   overflow-wrap: break-word;
 }
+
+.canvasPage {
+  box-shadow: 0 24px 48px -40px rgba(15, 23, 42, 0.35);
+}
+
+.scrollArea {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.scrollArea:hover {
+  scrollbar-color: rgba(0, 0, 0, 0.14) transparent;
+}
+
+.scrollArea::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollArea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollArea::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+}
+
+.scrollArea:hover::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.scrollArea:hover::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.28);
+}
+
+:global(.dark) .scrollArea:hover {
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+
+:global(.dark) .scrollArea:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+:global(.dark) .scrollArea:hover::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.dropzoneIndicator {
+  background: linear-gradient(
+    135deg,
+    var(--editor-dropzone) 0%,
+    var(--editor-dropzone-hover) 100%
+  );
+  border: 2px dashed var(--editor-dropzone-active);
+  animation: dropzonePulse 2s ease-in-out infinite;
+}
+
+.blockSelected {
+  box-shadow: var(--editor-selection-glow), var(--editor-drag-shadow);
+  border-color: var(--editor-block-selected) !important;
+  transition:
+    border-color var(--transition-medium) ease-out,
+    background-color var(--transition-medium) ease-out,
+    box-shadow var(--transition-medium) ease-out;
+}
+
+.blockHover {
+  border-color: hsl(214 20% 78%) !important;
+  transition:
+    border-color var(--transition-fast) ease-out,
+    background-color var(--transition-fast) ease-out,
+    box-shadow var(--transition-fast) ease-out;
+}
+
+.dragOverlay {
+  box-shadow: var(--editor-drag-shadow);
+  transform: rotate(3deg) scale(1.02);
+  transition: transform var(--transition-medium) var(--transition-spring);
+}
+
+.fadeIn {
+  animation: fadeIn var(--transition-fast) ease-out;
+}
+
+.hoverLift {
+  transition:
+    transform var(--transition-fast) ease-out,
+    box-shadow var(--transition-fast) ease-out;
+}
+
+.hoverLift:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes dropzonePulse {
+  0%,
+  100% {
+    background-color: var(--editor-dropzone);
+    border-color: var(--editor-dropzone-active);
+  }
+
+  50% {
+    background-color: var(--editor-dropzone-pulse);
+    border-color: var(--editor-dropzone-active);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

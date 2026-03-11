@@ -4,7 +4,7 @@ import {
   PlaceholderDropdown,
   usePlaceholderTrigger,
   insertPlaceholderIntoText,
-} from "../plugins/PlaceholderPlugin";
+} from "../plugins";
 import { containsPlaceholders } from "../parser/MarkParser";
 import type { HeadingBlockProps } from "../editorConfig";
 import styles from "../editor.module.css";

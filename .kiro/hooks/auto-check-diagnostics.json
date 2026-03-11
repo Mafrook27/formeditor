@@ -1,0 +1,13 @@
+{
+  "name": "Auto-Check Diagnostics",
+  "version": "1.0.0",
+  "description": "Automatically checks for TypeScript errors, linting issues, and other diagnostics after editing TypeScript/React files. Helps catch issues immediately before they accumulate.",
+  "when": {
+    "type": "fileEdited",
+    "patterns": ["src/**/*.ts", "src/**/*.tsx"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Check diagnostics for the edited file and report any errors or warnings. If there are issues, provide specific fixes."
+  }
+}

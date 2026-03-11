@@ -568,106 +568,11 @@ export function createSection(columns: 1 | 2 | 3 = 1): EditorSection {
 }
 
 export function getInitialState(): EditorState {
-  const introSection = createSection(1);
-  introSection.blocks[0] = [
-    {
-      ...getDefaultBlockProps(BLOCK_TYPES.HEADING),
-      content: "Financial Services Agreement",
-      level: "h1",
-      fontSize: 28,
-      fontWeight: 700,
-      textAlign: "center",
-      marginBottom: 4,
-    } as HeadingBlockProps,
-    {
-      ...getDefaultBlockProps(BLOCK_TYPES.PARAGRAPH),
-      content:
-        'This Agreement ("Agreement") is entered into as of the date signed below, between the parties identified herein. Please review all terms carefully before signing.',
-      fontSize: 13,
-      textAlign: "center",
-      color: "",
-      marginBottom: 16,
-    } as ParagraphBlockProps,
-    {
-      ...getDefaultBlockProps(BLOCK_TYPES.DIVIDER),
-      thickness: 5,
-      marginTop: 0,
-      marginBottom: 20,
-    } as DividerBlockProps,
-  ];
-
-  const formSection = createSection(2);
-  formSection.blocks[0] = [
-    {
-      ...getDefaultBlockProps(BLOCK_TYPES.TEXT_INPUT),
-      label: "Full Legal Name",
-      placeholder: "Enter your full name",
-      required: true,
-      fieldName: "full_name",
-    } as TextInputBlockProps,
-    {
-      ...getDefaultBlockProps(BLOCK_TYPES.TEXT_INPUT),
-      label: "Email Address",
-      placeholder: "name@example.com",
-      required: true,
-      fieldName: "email",
-      validationType: "email",
-    } as TextInputBlockProps,
-  ];
-  formSection.blocks[1] = [
-    {
-      ...getDefaultBlockProps(BLOCK_TYPES.TEXT_INPUT),
-      label: "Phone Number",
-      placeholder: "(555) 000-0000",
-      required: true,
-      fieldName: "phone",
-      validationType: "phone",
-    } as TextInputBlockProps,
-    {
-      ...getDefaultBlockProps(BLOCK_TYPES.DATE_PICKER),
-      label: "Date of Birth",
-      required: true,
-      fieldName: "dob",
-      width: 100,
-    } as DatePickerBlockProps,
-  ];
-
-  const termsSection = createSection(1);
-  termsSection.blocks[0] = [
-    {
-      ...getDefaultBlockProps(BLOCK_TYPES.HEADING),
-      content: "Terms & Conditions",
-      level: "h3",
-      fontSize: 18,
-      fontWeight: 600,
-      marginTop: 8,
-      marginBottom: 8,
-    } as HeadingBlockProps,
-    {
-      ...getDefaultBlockProps(BLOCK_TYPES.PARAGRAPH),
-      content:
-        "By executing this Agreement, you acknowledge that you have read, understood, and agree to be bound by the terms and conditions set forth herein. This Agreement constitutes the entire understanding between the parties with respect to the subject matter contained herein and supersedes all prior negotiations, representations, or agreements relating thereto.",
-      fontSize: 12,
-      lineHeight: 1.7,
-    } as ParagraphBlockProps,
-    {
-      ...getDefaultBlockProps(BLOCK_TYPES.SINGLE_CHECKBOX),
-      label:
-        "I have read and agree to the Terms & Conditions, Privacy Policy, and Disclosure Agreement.",
-      required: true,
-      fieldName: "terms_agree",
-    } as SingleCheckboxBlockProps,
-    {
-      ...getDefaultBlockProps(BLOCK_TYPES.SIGNATURE),
-      label: "Applicant Signature",
-      required: true,
-      fieldName: "applicant_signature",
-      helpText: "Please sign in the area above",
-    } as SignatureBlockProps,
-  ];
+  // Start with a fresh empty canvas - single empty section
+  const emptySection = createSection(1);
 
   return {
-    sections: [introSection, formSection, termsSection],
+    sections: [emptySection],
     selectedBlockId: null,
     selectedSectionId: null,
     isPreviewMode: false,

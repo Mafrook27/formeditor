@@ -6,7 +6,7 @@ import {
   PlaceholderDropdown,
   usePlaceholderTrigger,
   insertPlaceholderIntoText,
-} from "../plugins/PlaceholderPlugin";
+} from "../plugins";
 import type { ListBlockProps } from "../editorConfig";
 import editorStyles from "../editor.module.css";
 
@@ -152,16 +152,27 @@ export const ListBlock = memo(function ListBlock({
   const isEditable = !isPreview && !block.locked;
 
   return (
-    <div className="space-y-2" style={{ minWidth: 0 }}>
+    <div className="space-y-2 w-full" style={{ minWidth: 0, maxWidth: "100%" }}>
       <ListTag
-        className={`${block.listType === "ordered" ? "list-decimal" : "list-disc"} ml-5 space-y-1`}
-        style={{ minWidth: 0 }}
+        className={`${block.listType === "ordered" ? "list-decimal" : "list-disc"} space-y-1 w-full`}
+        style={{
+          minWidth: 0,
+          maxWidth: "100%",
+          paddingInlineStart: "1.5rem",
+          margin: 0,
+        }}
       >
         {items.map((item, idx) => (
           <li
             key={`${block.id}-${idx}`}
             className={`text-sm ${editorStyles.canvasCell}`}
-            style={{ minWidth: 0 }}
+            style={{
+              minWidth: 0,
+              maxWidth: "100%",
+              whiteSpace: "break-spaces",
+              wordBreak: "break-word",
+              overflowWrap: "break-word",
+            }}
           >
             {editingIndex === idx ? (
               <textarea
@@ -175,15 +186,20 @@ export const ListBlock = memo(function ListBlock({
                 onKeyDown={(e) => handleKeyDown(e, idx)}
                 className="w-full bg-transparent border-0 outline-none ring-0 focus:ring-2 focus:ring-primary rounded px-1 -mx-1 resize-none"
                 style={{
+                  display: "block",
+                  width: "100%",
+                  maxWidth: "100%",
+                  boxSizing: "border-box",
                   wordBreak: "break-word",
                   overflowWrap: "break-word",
+                  whiteSpace: "break-spaces",
                   minHeight: "1.5rem",
                   overflow: "hidden",
                 }}
               />
             ) : isEditable ? (
               <span
-                className={`cursor-text hover:bg-primary/5 px-1 -mx-1 rounded block ${editorStyles.canvasCell}`}
+                className={`cursor-text hover:bg-primary/5 px-1 -mx-1 rounded block w-full ${editorStyles.canvasCell}`}
                 onClick={() => handleItemClick(idx)}
                 role="button"
                 tabIndex={0}
@@ -193,6 +209,13 @@ export const ListBlock = memo(function ListBlock({
                     handleItemClick(idx);
                   }
                 }}
+                style={{
+                  minWidth: 0,
+                  maxWidth: "100%",
+                  whiteSpace: "break-spaces",
+                  wordBreak: "break-word",
+                  overflowWrap: "break-word",
+                }}
               >
                 {item || (
                   <span className="text-muted-foreground/50">
@@ -201,7 +224,18 @@ export const ListBlock = memo(function ListBlock({
                 )}
               </span>
             ) : (
-              <span className={editorStyles.canvasCell}>{item || ""}</span>
+              <span
+                className={`block w-full ${editorStyles.canvasCell}`}
+                style={{
+                  minWidth: 0,
+                  maxWidth: "100%",
+                  whiteSpace: "break-spaces",
+                  wordBreak: "break-word",
+                  overflowWrap: "break-word",
+                }}
+              >
+                {item || ""}
+              </span>
             )}
           </li>
         ))}
@@ -232,7 +266,7 @@ export const ListBlock = memo(function ListBlock({
               className="h-7 text-xs text-destructive hover:text-destructive"
               onClick={() => removeItem(items.length - 1)}
             >
-              <X className="h-3 w-3" /> Remove Last
+              <X className="h-3 w-3" />
             </Button>
           )}
         </div>

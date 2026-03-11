@@ -1,4 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
+// Import React tools we need
 import React, {
   createContext,
   useContext,
@@ -9,7 +10,9 @@ import React, {
   useMemo,
   type ReactNode,
 } from "react";
+// Import our reducer (the brain that handles state changes)
 import { editorReducer, ACTIONS, type EditorAction } from "./editorReducer";
+// Import types and configuration
 import type {
   EditorState,
   EditorBlock,
@@ -21,80 +24,67 @@ import {
   getDefaultBlockProps,
   createSection,
 } from "./editorConfig";
-import { v4 as uuidv4 } from "uuid";
+import { v4 as uuidv4 } from "uuid"; // Tool to generate unique IDs
+// Import error recovery tools
 import {
   emergencySave,
   getEmergencySave,
   clearEmergencySave,
-} from "./components/ErrorBoundary";
+} from "./components";
 
+// Key for saving editor content to browser storage
 const AUTO_SAVE_KEY = "editor_autosave";
 
-// Module-level clipboard — persists across renders without causing re-renders
+// Clipboard for copy/paste - stored outside React so it doesn't cause re-renders
+// This lets us copy a block and paste it even after the component re-renders
 let _clipboardBlock: EditorBlock | null = null;
 
+// Helper type to describe where a block is located
 interface BlockLocation {
-  section: EditorSection;
-  columnIndex: number;
-  blockIndex: number;
-  block: EditorBlock;
+  section: EditorSection;    // Which section contains the block
+  columnIndex: number;        // Which column (0, 1, or 2)
+  blockIndex: number;         // Position in the column
+  block: EditorBlock;         // The block itself
 }
 
+// This defines all the functions and data we can access from the editor
+// Think of this as the "toolbox" that components can use
 interface EditorContextValue {
-  state: EditorState;
-  dispatch: React.Dispatch<EditorAction>;
-  addBlock: (
-    type: BlockType,
-    sectionId: string,
-    columnIndex: number,
-    index?: number,
-  ) => string;
-  removeBlock: (blockId: string) => void;
-  updateBlock: (blockId: string, updates: Partial<EditorBlock>) => void;
-  updateBlockWithHistory: (
-    blockId: string,
-    updates: Partial<EditorBlock>,
-  ) => void;
+  state: EditorState;                                    // Current editor state
+  dispatch: React.Dispatch<EditorAction>;                // Send actions to reducer
+  addBlock: (type: BlockType, sectionId: string, columnIndex: number, index?: number) => string;
+  removeBlock: (blockId: string) => void;                // Delete a block
+  updateBlock: (blockId: string, updates: Partial<EditorBlock>) => void;  // Change block (no history)
+  updateBlockWithHistory: (blockId: string, updates: Partial<EditorBlock>) => void;  // Change block (with undo)
   updateSection: (sectionId: string, updates: Partial<EditorSection>) => void;
-  updateSectionWithHistory: (
-    sectionId: string,
-    updates: Partial<EditorSection>,
-  ) => void;
-  moveBlock: (
-    blockId: string,
-    toSectionId: string,
-    toColumnIndex: number,
-    toIndex?: number,
-  ) => void;
-  reorderBlocks: (
-    sectionId: string,
-    columnIndex: number,
-    oldIndex: number,
-    newIndex: number,
-  ) => void;
+  updateSectionWithHistory: (sectionId: string, updates: Partial<EditorSection>) => void;
+  moveBlock: (blockId: string, toSectionId: string, toColumnIndex: number, toIndex?: number) => void;
+  reorderBlocks: (sectionId: string, columnIndex: number, oldIndex: number, newIndex: number) => void;
   reorderSections: (oldIndex: number, newIndex: number) => void;
-  selectBlock: (blockId: string | null) => void;
-  selectSection: (sectionId: string | null) => void;
-  duplicateBlock: (blockId: string) => void;
-  togglePreview: () => void;
-  setZoom: (zoom: number) => void;
-  setDragging: (isDragging: boolean) => void;
-  addSection: (columns: 1 | 2 | 3, index?: number) => string;
-  removeSection: (sectionId: string) => void;
-  undo: () => void;
-  redo: () => void;
-  findBlock: (blockId: string) => BlockLocation | null;
-  getSelectedBlock: () => EditorBlock | null;
-  getSelectedSection: () => EditorSection | null;
+  selectBlock: (blockId: string | null) => void;         // Select a block (shows in inspector)
+  selectSection: (sectionId: string | null) => void;     // Select a section
+  duplicateBlock: (blockId: string) => void;             // Copy a block
+  togglePreview: () => void;                             // Switch edit/preview mode
+  setZoom: (zoom: number) => void;                       // Change zoom level
+  setDragging: (isDragging: boolean) => void;            // Track drag state
+  addSection: (columns: 1 | 2 | 3, index?: number) => string;  // Add new section
+  removeSection: (sectionId: string) => void;            // Delete a section
+  undo: () => void;                                      // Go back one step
+  redo: () => void;                                      // Go forward one step
+  findBlock: (blockId: string) => BlockLocation | null;  // Find where a block is
+  getSelectedBlock: () => EditorBlock | null;            // Get currently selected block
+  getSelectedSection: () => EditorSection | null;        // Get currently selected section
 }
 
+// Create the context (empty at first, filled by EditorProvider)
 const EditorContext = createContext<EditorContextValue | null>(null);
 
+// Function to load saved content when app starts
 function loadInitialSections() {
-  // 1. Check for emergency save (from crash recovery)
+  // Step 1: Check if we have an emergency save (from a crash)
   const emergency = getEmergencySave();
   if (emergency) {
-    clearEmergencySave();
+    clearEmergencySave(); // Clear it so we don't load it again
     console.info("[Editor] Restored from emergency save");
     return emergency.sections;
   }

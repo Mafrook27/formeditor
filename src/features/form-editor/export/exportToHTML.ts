@@ -125,7 +125,7 @@ function renderBlockHTML(block: EditorBlock): string {
       return `<fieldset ${commonAttrs} data-label="${escapeHtml(block.label)}" data-field-name="${block.fieldName}" data-required="${block.required}" data-options="${escapeHtml(JSON.stringify(block.options || []))}" data-layout="${block.layout}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${visualStyles} ${margin}">
   <legend style="font-size: 14px; font-weight: 500; margin-bottom: 8px;${rgLabelColor}">${escapeHtml(block.label)}${block.required ? ' <span style="color: #ef4444;">*</span>' : ""}</legend>
   <div style="display: flex; flex-direction: ${block.layout === "horizontal" ? "row" : "column"}; gap: 8px;">
-    ${(block.options || []).map((opt, i) => `<label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;${rgLabelColor}"><input type="radio" name="${block.fieldName}" value="${escapeHtml(opt)}"${block.required && i === 0 ? ' required aria-required="true"' : ""} /> ${escapeHtml(opt)}</label>`).join("\n    ")}
+    ${(block.options || []).map((opt, i) => `<label style="display: flex; align-items: flex-start; gap: 8px; font-size: 14px; cursor: pointer; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces;${rgLabelColor}"><input type="radio" name="${block.fieldName}" value="${escapeHtml(opt)}"${block.required && i === 0 ? ' required aria-required="true"' : ""} style="margin-top: 4px; flex-shrink: 0;" /><span style="display: block; min-width: 0; flex: 1; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces;">${escapeHtml(opt)}</span></label>`).join("\n    ")}
   </div>
 </fieldset>`;
     }
@@ -135,16 +135,16 @@ function renderBlockHTML(block: EditorBlock): string {
       return `<fieldset ${commonAttrs} data-label="${escapeHtml(block.label)}" data-field-name="${block.fieldName}" data-required="${block.required}" data-options="${escapeHtml(JSON.stringify(block.options || []))}" data-layout="${block.layout}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${visualStyles} ${margin}">
   <legend style="font-size: 14px; font-weight: 500; margin-bottom: 8px;${cbLabelColor}">${escapeHtml(block.label)}${block.required ? ' <span style="color: #ef4444;">*</span>' : ""}</legend>
   <div style="display: flex; flex-direction: ${block.layout === "horizontal" ? "row" : "column"}; gap: 8px;">
-    ${(block.options || []).map((opt) => `<label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;${cbLabelColor}"><input type="checkbox" name="${block.fieldName}" value="${escapeHtml(opt)}" /> ${escapeHtml(opt)}</label>`).join("\n    ")}
+    ${(block.options || []).map((opt) => `<label style="display: flex; align-items: flex-start; gap: 8px; font-size: 14px; cursor: pointer; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces;${cbLabelColor}"><input type="checkbox" name="${block.fieldName}" value="${escapeHtml(opt)}" style="margin-top: 4px; flex-shrink: 0;" /><span style="display: block; min-width: 0; flex: 1; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces;">${escapeHtml(opt)}</span></label>`).join("\n    ")}
   </div>
 </fieldset>`;
     }
 
     case BLOCK_TYPES.SINGLE_CHECKBOX:
       return `<div ${commonAttrs} data-label="${escapeHtml(block.label)}" data-field-name="${block.fieldName}" data-required="${block.required}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${visualStyles} ${margin}">
-  <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 14px; cursor: pointer; line-height: 1.5;">
+  <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 14px; cursor: pointer; line-height: 1.5; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces;">
     <input type="checkbox" name="${block.fieldName}"${block.required ? ' required aria-required="true"' : ""} style="margin-top: 4px; flex-shrink: 0;" />
-    <span>${preservePlaceholders(block.label)}</span>
+    <span style="display: block; min-width: 0; flex: 1; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces;">${preservePlaceholders(block.label)}</span>
   </label>
 </div>`;
 
@@ -232,9 +232,9 @@ function renderBlockHTML(block: EditorBlock): string {
           ? "list-style-type: decimal;"
           : "list-style-type: disc;";
 
-      let listHtml = `<${tag} ${commonAttrs} data-list-type="${listBlock.listType}" data-items="${escapeHtml(JSON.stringify(listBlock.items || []))}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${listStyle} margin-left: 24px; ${visualStyles} ${margin}">\n`;
+      let listHtml = `<${tag} ${commonAttrs} data-list-type="${listBlock.listType}" data-items="${escapeHtml(JSON.stringify(listBlock.items || []))}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${listStyle} width: 100%; max-width: 100%; margin-left: 0; padding-left: 24px; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces; ${visualStyles} ${margin}">\n`;
       (listBlock.items || []).forEach((item) => {
-        listHtml += `  <li style="padding: 4px 0;">${preservePlaceholders(item)}</li>\n`;
+        listHtml += `  <li style="padding: 4px 0; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces;"><span style="display: block; width: 100%; max-width: 100%; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces;">${preservePlaceholders(item)}</span></li>\n`;
       });
       listHtml += `</${tag}>`;
       return listHtml;
@@ -250,7 +250,7 @@ function renderBlockHTML(block: EditorBlock): string {
       };
       const btnId = btnBlock.buttonType === "submit" ? 'id="form-submit"' : "";
 
-      return `<div ${commonAttrs} data-label="${escapeHtml(btnBlock.label)}" data-button-type="${btnBlock.buttonType}" data-variant="${btnBlock.variant}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${visualStyles} ${margin}"><button ${btnId} type="${btnBlock.buttonType}" style="padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; ${variantStyles[btnBlock.variant] || variantStyles.primary}">${escapeHtml(btnBlock.label)}</button></div>`;
+      return `<div ${commonAttrs} data-label="${escapeHtml(btnBlock.label)}" data-button-type="${btnBlock.buttonType}" data-variant="${btnBlock.variant}" data-margin-left="${block.marginLeft || 0}" data-margin-right="${block.marginRight || 0}" style="${visualStyles} ${margin}"><button ${btnId} type="${btnBlock.buttonType}" style="padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces; ${variantStyles[btnBlock.variant] || variantStyles.primary}"><span style="display: block; width: 100%; word-break: break-word; overflow-wrap: break-word; white-space: break-spaces;">${escapeHtml(btnBlock.label)}</span></button></div>`;
     }
 
     default:
@@ -651,25 +651,48 @@ export function exportToHTML(sections: EditorSection[]): string {
     .signature-area {
       border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 16px;
       text-align: left; position: relative; min-height: 48px;
-      display: flex; align-items: center; gap: 12px;
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
       background: #fff; transition: border-color 0.2s, box-shadow 0.2s;
     }
     .signature-area:hover { border-color: #94a3b8; }
     .sig-label {
-      font-size: 14px; font-weight: 500; color: #334155; white-space: nowrap;
+      font-size: 14px; font-weight: 500; color: #334155;
+      min-width: 0; flex: 1 1 220px;
+      word-break: break-word; overflow-wrap: break-word; white-space: break-spaces;
     }
     .sign-button {
       background: #1e293b; color: #fff; border: none;
       padding: 6px 16px; cursor: pointer; font-weight: 500; font-size: 13px;
       border-radius: 4px; display: inline-flex; align-items: center; gap: 6px;
-      transition: background 0.15s; margin-left: auto;
+      transition: background 0.15s; margin-left: auto; max-width: 100%;
     }
     .sign-button:hover { background: #334155; }
     .sign-button:active { background: #0f172a; }
     a { color: #2563eb; text-decoration: underline; }
     a:hover { color: #1d4ed8; }
-    ul, ol { margin-left: 24px; }
-    li { padding: 4px 0; }
+    ul, ol {
+      margin-left: 0;
+      padding-left: 24px;
+      width: 100%;
+      max-width: 100%;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      white-space: break-spaces;
+    }
+    li {
+      padding: 4px 0;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      white-space: break-spaces;
+    }
+    li > span {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      white-space: break-spaces;
+    }
     .esign-overlay {
       display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.45); z-index: 10000;
       align-items: center; justify-content: center;
